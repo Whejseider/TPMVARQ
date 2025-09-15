@@ -434,9 +434,9 @@ void sysWrite(CPU *cpu) {
             if (modo & 0x01) printf(" ");
             char c = valor & 0xFF;
             if (c >= 32 && c <= 126) {
-                printf("%c", c);
+                printf("A%c ", c);
             } else {
-                printf(".");
+                printf(". ");
             }
         }
         if (modo & 0x01) { // decimal
