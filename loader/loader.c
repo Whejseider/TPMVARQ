@@ -25,10 +25,11 @@ int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm) {
 
     uint16_t tamanoCodigo = (tamanoBytes[0] << 8) | tamanoBytes[1];
 
+    printf("\n=== INFORMACIÓN DEL PROGRAMA ===\n");
     printf("Identificador: '%.5s'\n", identificador);
     printf("Versión: %d\n", version);
-    printf("Bytes tamaño: %02X %02X\n", tamanoBytes[0], tamanoBytes[1]);
-    printf("Tamaño código: %d\n", tamanoCodigo);
+    printf("Bytes tamaño del código (hex): %02X %02X\n", tamanoBytes[0], tamanoBytes[1]);
+    printf("Tamaño del código: %d\n\n", tamanoCodigo);
 
     if (strncmp(identificador, "VMX25", 5) != 0) {
         mostrarError("Error: Archivo no válido - identificador incorrecto");
@@ -39,7 +40,7 @@ int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm) {
     if (version != 1) {
         mostrarError("Error: Versión no soportada:");
         char buffer[8];
-        snprintf(buffer,sizeof(buffer), "%u", version);
+        snprintf(buffer, sizeof(buffer), "%u", version);
         mostrarError(buffer);
         fclose(archivo);
         return 0;
