@@ -4,6 +4,7 @@ La aplicación de la máquina virtual, está realizada en el lenguaje de program
 
 Está compilada y/o desarrollada para el sistema operativo de **Windows 11 x64**.
 
+Dentro de la carpeta traductor se encuentran algunos ejemplos de programas en código máquina (.vmx).
 
 
 ## Requerimientos previos
