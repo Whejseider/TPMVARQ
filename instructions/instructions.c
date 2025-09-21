@@ -12,50 +12,50 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
 
     instr->direccion = direccion;
 
-    uint8_t tipo_op2 = (primerByte >> 6) & 0x03;
-    uint8_t tipo_op1 = (primerByte >> 4) & 0x03;
+    uint8_t tipoOp2 = (primerByte >> 6) & 0x03;
+    uint8_t tipoOp1 = (primerByte >> 4) & 0x03;
 
-    if (tipo_op1 == 0 && tipo_op2 != 0) {
-        uint8_t tipo_aux = tipo_op2;
-        tipo_op2 = tipo_op1;
-        tipo_op1 = tipo_aux;
+    if (tipoOp1 == 0 && tipoOp2 != 0) {
+        uint8_t tipoAux = tipoOp2;
+        tipoOp2 = tipoOp1;
+        tipoOp1 = tipoAux;
     }
 
     instr->opcode = primerByte & 0x1F;
 
-    instr->op2.tipo = tipo_op2;
-    if (tipo_op2 == TIPO_REGISTRO) {
+    instr->op2.tipo = tipoOp2;
+    if (tipoOp2 == TIPO_REGISTRO) {
         instr->op2.datos.valor = leerMemoria8(cpu, direccion + pos) & 0x1F;
         pos += 1;
-    } else if (tipo_op2 == TIPO_INMEDIATO) {
+    } else if (tipoOp2 == TIPO_INMEDIATO) {
         int16_t valor16 = (int16_t) leerMemoria16(cpu, direccion + pos);
         instr->op2.datos.valor = (int32_t) valor16;
         pos += 2;
-    } else if (tipo_op2 == TIPO_MEMORIA) {
+    } else if (tipoOp2 == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
         instr->op2.datos.memoria.codReg = leerMemoria8(cpu, dirLog) & 0x1F;
         int16_t offset16 = (int16_t) leerMemoria16(cpu, dirLog + 1);
         instr->op2.datos.memoria.offset = (int32_t) offset16;
         pos += 3;
-    } else if (tipo_op2 == TIPO_NINGUNO) {
+    } else if (tipoOp2 == TIPO_NINGUNO) {
         instr->op2.datos.valor = 0;
     }
 
-    instr->op1.tipo = tipo_op1;
-    if (tipo_op1 == TIPO_REGISTRO) {
+    instr->op1.tipo = tipoOp1;
+    if (tipoOp1 == TIPO_REGISTRO) {
         instr->op1.datos.valor = leerMemoria8(cpu, direccion + pos) & 0x1F;
         pos += 1;
-    } else if (tipo_op1 == TIPO_INMEDIATO) {
+    } else if (tipoOp1 == TIPO_INMEDIATO) {
         int16_t valor16 = (int16_t) leerMemoria16(cpu, direccion + pos);
         instr->op1.datos.valor = (int32_t) valor16;
         pos += 2;
-    } else if (tipo_op1 == TIPO_MEMORIA) {
+    } else if (tipoOp1 == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
         instr->op1.datos.memoria.codReg = leerMemoria8(cpu, dirLog) & 0x1F;
         int16_t offset16 = (int16_t) leerMemoria16(cpu, dirLog + 1);
         instr->op1.datos.memoria.offset = (int32_t) offset16;
         pos += 3;
-    } else if (tipo_op1 == TIPO_NINGUNO) {
+    } else if (tipoOp1 == TIPO_NINGUNO) {
         instr->op1.datos.valor = 0;
     }
 
@@ -341,7 +341,7 @@ uint32_t instr_sys(CPU *cpu, Instruccion *instr) {
             sysWrite(cpu);
             break;
         default:
-            fprintf(stderr, "Sistema call no implementada: %d\n",
+            fprintf(stderr, "Llamada al sistema no implementada: %d\n",
                     syscall); // TODO Provisorio, modificar el mostrarError o algo pero bueno
             break;
     }
