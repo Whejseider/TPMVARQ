@@ -440,7 +440,7 @@ void sysWrite(CPU *cpu) {
             }
         }
         if (modo & 0x01) { // decimal
-            printf("%d", valor);
+            printf(" %d", valor);
         }
         printf("\n");
     }
