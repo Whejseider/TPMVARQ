@@ -84,7 +84,8 @@ Tamaño del código: 45
 
 === EJECUCIÓN ===
 Ejecutando programa...
-[10004]: 6
+
+[0031]:  6
 
 Programa terminado.
 ```
