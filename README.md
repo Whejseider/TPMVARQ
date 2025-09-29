@@ -101,7 +101,8 @@ Bytes tamaño del código (hex): 00 2D
 Tamaño del código: 45
 
 Ejecutando programa...
-[10004]: 6
+
+[0031]:  6
 
 Programa terminado.
 ```
