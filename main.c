@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    printf("Ejecutando programa...\n");
+    printf("Ejecutando programa...\n\n");
     vmxRun(&cpu);
     printf("\nPrograma terminado.\n");
 

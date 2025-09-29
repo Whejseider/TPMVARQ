@@ -402,17 +402,18 @@ void sysWrite(CPU *cpu) {
 
     for (int i = 0; i < cantidad; i++) {
         uint32_t direccionLogica = direccion + (i * tamano);
+        uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, tamano);
         int32_t valor = 0;
 
         if (tamano == 1) {
-            valor = (int32_t) (int8_t) leerMemoria8(cpu, direccionLogica);
+            valor =  leerMemoria8(cpu, direccionLogica);
         } else if (tamano == 2) {
             valor = (int32_t) (int16_t) leerMemoria16(cpu, direccionLogica);
         } else if (tamano == 4) {
             valor = (int32_t) leerMemoria32(cpu, direccionLogica);
         }
 
-        printf("[%04X]: ", direccionLogica);
+        printf("[%04X]: ", direccionFisica);
 
 
         if (modo & 0x10) { // binario
