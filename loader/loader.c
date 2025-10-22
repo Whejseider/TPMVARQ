@@ -2,14 +2,15 @@
 #include <string.h>
 #include "loader.h"
 #include "../dissasembler/dissasembler.h"
+#include "../utils/utils.h"
 
 int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm) {
-    FILE *archivo = fopen(nombreArchivo, "rb");
-    if (!archivo) {
-        mostrarError("Error: No se pudo abrir el archivo");
-        mostrarError(nombreArchivo);
+    if (!validarArchivo(nombreArchivo)) {
+        mostrarErrorConCodigo(VMX_ERROR_FILE_NOT_FOUND, nombreArchivo);
         return 0;
     }
+
+    FILE *archivo = fopen(nombreArchivo, "rb");
 
     char identificador[5];
     uint8_t version;
@@ -18,7 +19,7 @@ int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm) {
     if (fread(identificador, 1, 5, archivo) != 5 ||
         fread(&version, 1, 1, archivo) != 1 ||
         fread(tamanoBytes, 1, 2, archivo) != 2) {
-        mostrarError("Error: No se pudo leer la cabecera");
+        mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudo leer la cabecera");
         fclose(archivo);
         return 0;
     }
@@ -31,23 +32,22 @@ int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm) {
     printf("Bytes tamaño del código (hex): %02X %02X\n", tamanoBytes[0], tamanoBytes[1]);
     printf("Tamaño del código: %d\n\n", tamanoCodigo);
 
-    if (strncmp(identificador, "VMX25", 5) != 0) {
-        mostrarError("Error: Archivo no válido - identificador incorrecto");
+    if (!validarIdentificadorVMX(identificador)) {
+        mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "identificador incorrecto");
         fclose(archivo);
         return 0;
     }
 
-    if (version != 1) {
-        mostrarError("Error: Versión no soportada:");
+    if (!validarVersionVMX(version)) {
         char buffer[8];
         snprintf(buffer, sizeof(buffer), "%u", version);
-        mostrarError(buffer);
+        mostrarErrorConCodigo(VMX_ERROR_INVALID_VERSION, buffer);
         fclose(archivo);
         return 0;
     }
 
     if (fread(cpu->mem, 1, tamanoCodigo, archivo) != tamanoCodigo) {
-        mostrarError("Error: No se pudo leer el código del programa");
+        mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudo leer el código del programa");
         fclose(archivo);
         return 0;
     }

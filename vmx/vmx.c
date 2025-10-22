@@ -116,8 +116,7 @@ void vmxRun(CPU *cpu) {
         if (tablaInstrucciones[instr.opcode] != NULL) {
             uint32_t resultado = tablaInstrucciones[instr.opcode](cpu, &instr);
         } else {
-            mostrarError("Instrucción inválida");
-            exit(1);
+            terminarConError(VMX_ERROR_INVALID_INSTRUCTION, NULL);
         }
     }
 }
@@ -130,11 +129,4 @@ void actualizarCC(CPU *cpu, uint32_t resultado) {
     cpu->regs[REG_CC] = 0;
     if ((resultado & 0xFFFFFFFF) == 0) cpu->regs[REG_CC] |= CC_Z_MASK;
     if ((int32_t)resultado < 0) cpu->regs[REG_CC] |= CC_N_MASK;
-}
-
-/**
- * Muestra un mensaje de error en stderr
- */
-void mostrarError(const char *mensaje) {
-    fprintf(stderr, "Error: %s\n", mensaje);
 }

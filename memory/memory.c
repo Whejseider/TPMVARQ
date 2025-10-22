@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "../utils/utils.h"
 
 /**
  * Traduce una dirección lógica a física usando la tabla de segmentos
@@ -9,8 +10,7 @@ uint32_t traducirDireccion(CPU *cpu, uint32_t direccionLogica, uint32_t tamano) 
     uint16_t offset = direccionLogica & 0xFFFF;
 
     if (segmento >= MAX_SEGMENTOS) {
-        mostrarError("Fallo de segmento: segmento inválido");
-        exit(1);
+        terminarConError(VMX_ERROR_SEGMENT_FAULT, "segmento inválido");
     }
 
     uint32_t inicioAcceso = offset;
@@ -18,8 +18,7 @@ uint32_t traducirDireccion(CPU *cpu, uint32_t direccionLogica, uint32_t tamano) 
     uint32_t tamanoSegmento = cpu->segmentos[segmento].tamano;
 
     if (finAcceso >= tamanoSegmento) {
-        mostrarError("Fallo de segmento: acceso fuera de límites");
-        exit(1);
+        terminarConError(VMX_ERROR_MEMORY_ACCESS, "acceso fuera de límites");
     }
 
     uint32_t direccionFisica = cpu->segmentos[segmento].base + offset;

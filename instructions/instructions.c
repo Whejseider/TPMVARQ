@@ -2,6 +2,7 @@
 #include "instructions.h"
 #include "../memory/memory.h"
 #include "../syscalls/syscalls.h"
+#include "../utils/utils.h"
 
 /**
  * Decodifica una instrucción desde memoria
@@ -155,8 +156,7 @@ uint32_t instr_div(CPU *cpu, Instruccion *instr) {
     int32_t divisor = (int32_t) obtenerValorOperando(cpu, &instr->op2);
 
     if (divisor == 0) {
-        mostrarError("División por cero");
-        exit(1);
+        terminarConError(VMX_ERROR_DIVISION_BY_ZERO, NULL);
     }
 
     int32_t cociente = dividendo / divisor;

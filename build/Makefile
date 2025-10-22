@@ -279,6 +279,30 @@ syscalls/syscalls.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.s
 .PHONY : syscalls/syscalls.c.s
 
+utils/utils.obj: utils/utils.c.obj
+.PHONY : utils/utils.obj
+
+# target to build an object file
+utils/utils.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/utils/utils.c.obj
+.PHONY : utils/utils.c.obj
+
+utils/utils.i: utils/utils.c.i
+.PHONY : utils/utils.i
+
+# target to preprocess a source file
+utils/utils.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/utils/utils.c.i
+.PHONY : utils/utils.c.i
+
+utils/utils.s: utils/utils.c.s
+.PHONY : utils/utils.s
+
+# target to generate assembly for a file
+utils/utils.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/utils/utils.c.s
+.PHONY : utils/utils.c.s
+
 vmx/vmx.obj: vmx/vmx.c.obj
 .PHONY : vmx/vmx.obj
 
@@ -331,6 +355,9 @@ help:
 	@echo ... syscalls/syscalls.obj
 	@echo ... syscalls/syscalls.i
 	@echo ... syscalls/syscalls.s
+	@echo ... utils/utils.obj
+	@echo ... utils/utils.i
+	@echo ... utils/utils.s
 	@echo ... vmx/vmx.obj
 	@echo ... vmx/vmx.i
 	@echo ... vmx/vmx.s

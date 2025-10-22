@@ -11,6 +11,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/TPMVARQ.dir/memory/memory.c.obj.d"
   "CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj"
   "CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj.d"
+  "CMakeFiles/TPMVARQ.dir/utils/utils.c.obj"
+  "CMakeFiles/TPMVARQ.dir/utils/utils.c.obj.d"
   "CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj"
   "CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj.d"
   "TPMVARQ.exe"

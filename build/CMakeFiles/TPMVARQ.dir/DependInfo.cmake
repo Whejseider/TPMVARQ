@@ -14,6 +14,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/main.c" "CMakeFiles/TPMVARQ.dir/main.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/main.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/memory/memory.c" "CMakeFiles/TPMVARQ.dir/memory/memory.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/memory/memory.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/syscalls/syscalls.c" "CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj.d"
+  "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/utils/utils.c" "CMakeFiles/TPMVARQ.dir/utils/utils.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/utils/utils.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/vmx/vmx.c" "CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj.d"
   )
 

@@ -8,6 +8,7 @@
 #include "stdint.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../utils/utils.h"
 
 #define MAX_SEGMENTOS 2
 #define RAM 16384
@@ -169,8 +170,6 @@ void vmxRun(CPU *cpu);
 
 // ==== Funciones auxiliares ====
 void actualizarCC(CPU *cpu, uint32_t resultado);
-
-void mostrarError(const char *mensaje);
 
 // ==== Llamadas al sistema ====
 // No se si dejarlo acá o en instrucción

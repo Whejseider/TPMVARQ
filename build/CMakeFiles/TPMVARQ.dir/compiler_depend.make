@@ -59,6 +59,7 @@ CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj: C:/Users/Franco/Desktop/
   C:/MinGW64/x86_64-w64-mingw32/include/time.h \
   C:/MinGW64/x86_64-w64-mingw32/include/vadefs.h \
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/memory/memory.h \
+  C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.h \
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/vmx/vmx.h \
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/instructions/instructions.h
 
@@ -148,6 +149,36 @@ CMakeFiles/TPMVARQ.dir/memory/memory.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/vmx/vmx.h \
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/memory/memory.h
 
+CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.c \
+  C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed/limits.h \
+  C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed/syslimits.h \
+  C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/stddef.h \
+  C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/stdint.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw_mac.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw_off_t.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw_print_pop.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw_print_push.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/_mingw_secapi.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/crtdefs.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/limits.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/malloc.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/sdks/_mingw_ddk.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/sdks/_mingw_directx.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/sec_api/stdio_s.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/sec_api/stdlib_s.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/sec_api/string_s.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/stddef.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/stdint.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/stdio.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/stdlib.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/string.h \
+  C:/MinGW64/x86_64-w64-mingw32/include/swprintf.inl \
+  C:/MinGW64/x86_64-w64-mingw32/include/vadefs.h \
+  C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/memory/memory.h \
+  C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/vmx/vmx.h \
+  C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.h
+
 CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/vmx/vmx.c \
   C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed/limits.h \
   C:/MinGW64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed/syslimits.h \
@@ -177,6 +208,8 @@ CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/instructions/instructions.h \
   C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/vmx/vmx.h
 
+
+C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.c:
 
 C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/dissasembler/dissasembler.c:
 
@@ -241,6 +274,8 @@ C:/MinGW64/x86_64-w64-mingw32/include/sec_api/stdlib_s.h:
 C:/MinGW64/x86_64-w64-mingw32/include/swprintf.inl:
 
 C:/MinGW64/x86_64-w64-mingw32/include/vadefs.h:
+
+C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.h:
 
 C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/dissasembler/dissasembler.h:
 

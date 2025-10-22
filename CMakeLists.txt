@@ -16,4 +16,6 @@ add_executable(TPMVARQ
         dissasembler/dissasembler.c
         dissasembler/dissasembler.h
         syscalls/syscalls.c
-        syscalls/syscalls.h)
+        syscalls/syscalls.h
+        utils/utils.c
+        utils/utils.h)
