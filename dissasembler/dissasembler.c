@@ -101,7 +101,7 @@ void mostrarOperando(Operando *op, CPU *cpu) {
 
         case TIPO_MEMORIA: {
             uint8_t reg = op->datos.memoria.codReg;
-            uint16_t despl = op->datos.memoria.offset;
+            int16_t despl = op->datos.memoria.offset;
 
             printf("[");
             if (reg == 0) {

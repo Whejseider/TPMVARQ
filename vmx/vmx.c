@@ -2,11 +2,13 @@
 #include "vmx.h"
 #include "../instructions/instructions.h"
 
+/**
+ * Inicializa la tabla de instrucciones con punteros a funciones
+ * Mapea cada código de operación a su función correspondiente
+ */
 void inicializarTablaInstrucciones() {
-    // Inicializar
     memset(tablaInstrucciones, 0, sizeof(tablaInstrucciones));
 
-    // Mapear códigoss de operación a funciones
     tablaInstrucciones[OP_SYS] = instr_sys;
     tablaInstrucciones[OP_JMP] = instr_jmp;
     tablaInstrucciones[OP_JZ] = instr_jz;
@@ -35,32 +37,37 @@ void inicializarTablaInstrucciones() {
     tablaInstrucciones[OP_RND] = instr_rnd;
 }
 
+/**
+ * Configura la tabla de segmentos de memoria
+ * CS: segmento de código (0)
+ * DS: segmento de datos (1)
+ */
 void inicializaTablaSegmentos(CPU *cpu, uint16_t tamanoCodigo) {
-    // CS
     cpu->segmentos[0].base = 0;
     cpu->segmentos[0].tamano = tamanoCodigo;
 
-    // DS
     cpu->segmentos[1].base = tamanoCodigo;
     cpu->segmentos[1].tamano = RAM - tamanoCodigo;
 }
 
+/**
+ * Inicializa los registros de la CPU con valores por defecto
+ * Configura CS, DS e IP para comenzar la ejecución
+ */
 void inicializarRegistros(CPU *cpu) {
-    // Inicializar
     memset(cpu->regs, 0, sizeof(cpu->regs));
 
-    // CS apunta al segmento 0 (código)
     cpu->regs[REG_CS] = 0x00000000;
-
-    // DS apunta al segmento 1 (datos)
     cpu->regs[REG_DS] = 0x00010000;
-
-    // IP comienza en el segmento de códigos
     cpu->regs[REG_IP] = cpu->regs[REG_CS];
 
     cpu->ejecutando = 1;
 }
 
+/**
+ * Ciclo principal de ejecución de la máquina virtual
+ * Lee instrucciones, las decodifica y las ejecuta hasta encontrar STOP
+ */
 void vmxRun(CPU *cpu) {
     Instruccion instr;
     uint32_t tamanoInstr;
@@ -74,6 +81,12 @@ void vmxRun(CPU *cpu) {
             break;
         }
 
+        uint16_t offsetIp = cpu->regs[REG_IP] & 0xFFFF;
+        if (offsetIp >= cpu->segmentos[0].tamano) {
+            cpu->ejecutando = 0;
+            break;
+        }
+
         tamanoInstr = leerInstruccion(cpu, cpu->regs[REG_IP], &instr);
 
         cpu->regs[REG_OPC] = instr.opcode;
@@ -84,8 +97,8 @@ void vmxRun(CPU *cpu) {
                              ((uint32_t)offsetSigno & 0x0000FFFF);
             cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | (valor & 0x00FFFFFF);
         } else {
-            int32_t valorConSigno = (int32_t)instr.op1.datos.valor;
-            cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | (valorConSigno & 0x00FFFFFF);
+            int32_t valorConSigno = instr.op1.datos.valor;
+            cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | ((uint32_t)valorConSigno & 0x00FFFFFF);
         }
 
         if (instr.op2.tipo == TIPO_MEMORIA) {
@@ -94,16 +107,14 @@ void vmxRun(CPU *cpu) {
                              ((uint32_t)offsetSigno & 0x0000FFFF);
             cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | (valor & 0x00FFFFFF);
         } else {
-            int32_t valorConSigno = (int32_t)instr.op2.datos.valor;
-            cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | (valorConSigno & 0x00FFFFFF);
+            int32_t valorConSigno = instr.op2.datos.valor;
+            cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | ((uint32_t)valorConSigno & 0x00FFFFFF);
         }
 
-        // Ejecutar la instrucción
+        cpu->regs[REG_IP] += tamanoInstr;
+
         if (tablaInstrucciones[instr.opcode] != NULL) {
-            uint32_t avance = tablaInstrucciones[instr.opcode](cpu, &instr);
-            if (avance > 0) {
-                cpu->regs[REG_IP] += tamanoInstr;
-            }
+            uint32_t resultado = tablaInstrucciones[instr.opcode](cpu, &instr);
         } else {
             mostrarError("Instrucción inválida");
             exit(1);
@@ -111,6 +122,10 @@ void vmxRun(CPU *cpu) {
     }
 }
 
+/**
+ * Actualiza el registro de condición (CC) basado en el resultado de una operación
+ * Establece flags de cero (Z) y negativo (N)
+ */
 void actualizarCC(CPU *cpu, uint32_t resultado) {
     cpu->regs[REG_CC] = 0;
     if ((resultado & 0xFFFFFFFF) == 0) cpu->regs[REG_CC] |= CC_Z_MASK;
@@ -118,8 +133,7 @@ void actualizarCC(CPU *cpu, uint32_t resultado) {
 }
 
 /**
- * TODO: Mejorar a futuro
- * @param mensaje
+ * Muestra un mensaje de error en stderr
  */
 void mostrarError(const char *mensaje) {
     fprintf(stderr, "Error: %s\n", mensaje);

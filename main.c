@@ -3,12 +3,14 @@
 #include "loader/loader.h"
 
 /**
- * Programa principal
- * Admite 2 parámetros, el archivo y el flag [-d] (sin corchetes)
- * @param argc cantidad de argumentos
- * @param argv en dónde están ubicados los argumentos (incluye el programa .exe,
- * así que serian si se incluye el [-d] 3 parámetros)
- * @return
+ * Programa principal de la máquina virtual VMX
+ * 
+ * Uso: programa archivo.vmx [-d]
+ * -d: muestra el desensamblador antes de ejecutar
+ * 
+ * @param argc número de argumentos
+ * @param argv array de argumentos (programa, archivo, opcionalmente -d)
+ * @return código de salida (0 = éxito, 1 = error)
  */
 int main(int argc, char *argv[]) {
     if (argc < 2) {

@@ -2,6 +2,15 @@
 #include "instructions.h"
 #include "../memory/memory.h"
 
+/**
+ * Decodifica una instrucción desde memoria
+ * Lee el opcode y operandos según el formato de instrucción VMX
+ * 
+ * @param cpu estructura de la CPU
+ * @param direccion dirección donde está la instrucción
+ * @param instr estructura donde guardar la instrucción decodificada
+ * @return tamaño en bytes de la instrucción
+ */
 uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
     uint32_t pos = 0;
     uint8_t primerByte;
@@ -16,9 +25,8 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
     uint8_t tipoOp1 = (primerByte >> 4) & 0x03;
 
     if (tipoOp1 == 0 && tipoOp2 != 0) {
-        uint8_t tipoAux = tipoOp2;
-        tipoOp2 = tipoOp1;
-        tipoOp1 = tipoAux;
+        tipoOp1 = tipoOp2;
+        tipoOp2 = 0;
     }
 
     instr->opcode = primerByte & 0x1F;
@@ -62,6 +70,10 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
     return pos;
 }
 
+/**
+ * Obtiene el valor de un operando según su tipo
+ * Maneja registros, valores inmediatos y direcciones de memoria
+ */
 uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
     switch (op->tipo) {
         case TIPO_REGISTRO:
@@ -80,6 +92,10 @@ uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
     }
 }
 
+/**
+ * Establece el valor de un operando según su tipo
+ * Maneja registros y direcciones de memoria
+ */
 void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
     switch (op->tipo) {
         case TIPO_REGISTRO:
@@ -98,13 +114,12 @@ void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
     }
 }
 
-// ==== INTRUCCIONES ====
+// ==== INSTRUCCIONES ARITMÉTICAS Y LÓGICAS ====
 
-// Instrucciones aritméticas y lógicas
 uint32_t instr_mov(CPU *cpu, Instruccion *instr) {
     uint32_t valor = obtenerValorOperando(cpu, &instr->op2);
     establecerValorOperando(cpu, &instr->op1, valor);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_add(CPU *cpu, Instruccion *instr) {
@@ -113,7 +128,7 @@ uint32_t instr_add(CPU *cpu, Instruccion *instr) {
     int32_t resultado = val1 + val2;
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_sub(CPU *cpu, Instruccion *instr) {
@@ -122,7 +137,7 @@ uint32_t instr_sub(CPU *cpu, Instruccion *instr) {
     int32_t resultado = val1 - val2;
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_mul(CPU *cpu, Instruccion *instr) {
@@ -131,22 +146,32 @@ uint32_t instr_mul(CPU *cpu, Instruccion *instr) {
     int32_t resultado = val1 * val2;
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_div(CPU *cpu, Instruccion *instr) {
-    int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
-    int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
-    if (val2 == 0) {
+    int32_t dividendo = (int32_t) obtenerValorOperando(cpu, &instr->op1);
+    int32_t divisor = (int32_t) obtenerValorOperando(cpu, &instr->op2);
+
+    if (divisor == 0) {
         mostrarError("División por cero");
         exit(1);
     }
-    int32_t resultado = val1 / val2;
-    int32_t resto = val1 % val2;
-    establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
-    cpu->regs[REG_AC] = (uint32_t) resto;
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+
+    int32_t cociente = dividendo / divisor;
+    int32_t resto = dividendo % divisor;
+
+    // Si hay resto y los signos son diferentes, ajustar hacia abajo
+    if (resto != 0 && ((dividendo ^ divisor) < 0)) {
+        cociente--;
+        resto += divisor;
+    }
+
+    establecerValorOperando(cpu, &instr->op1, (uint32_t)cociente);
+    cpu->regs[REG_AC] = resto;
+    actualizarCC(cpu, (uint32_t)cociente);
+
+    return 1;
 }
 
 uint32_t instr_cmp(CPU *cpu, Instruccion *instr) {
@@ -154,7 +179,7 @@ uint32_t instr_cmp(CPU *cpu, Instruccion *instr) {
     int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
     int32_t resultado = val1 - val2;
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_shl(CPU *cpu, Instruccion *instr) {
@@ -162,8 +187,8 @@ uint32_t instr_shl(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 << val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    actualizarCC(cpu, resultado);
+    return 1;
 }
 
 uint32_t instr_shr(CPU *cpu, Instruccion *instr) {
@@ -171,8 +196,8 @@ uint32_t instr_shr(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 >> val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    actualizarCC(cpu, resultado);
+    return 1;
 }
 
 uint32_t instr_sar(CPU *cpu, Instruccion *instr) {
@@ -181,7 +206,7 @@ uint32_t instr_sar(CPU *cpu, Instruccion *instr) {
     int32_t resultado = val1 >> val2;
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_and(CPU *cpu, Instruccion *instr) {
@@ -189,8 +214,8 @@ uint32_t instr_and(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 & val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    actualizarCC(cpu, resultado);
+    return 1;
 }
 
 uint32_t instr_or(CPU *cpu, Instruccion *instr) {
@@ -198,8 +223,8 @@ uint32_t instr_or(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 | val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    actualizarCC(cpu, resultado);
+    return 1;
 }
 
 uint32_t instr_xor(CPU *cpu, Instruccion *instr) {
@@ -207,8 +232,8 @@ uint32_t instr_xor(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 ^ val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    actualizarCC(cpu, resultado);
+    return 1;
 }
 
 uint32_t instr_swap(CPU *cpu, Instruccion *instr) {
@@ -216,7 +241,7 @@ uint32_t instr_swap(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     establecerValorOperando(cpu, &instr->op1, val2);
     establecerValorOperando(cpu, &instr->op2, val1);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_ldl(CPU *cpu, Instruccion *instr) {
@@ -224,7 +249,7 @@ uint32_t instr_ldl(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = (val1 & 0xFFFF0000) | (val2 & 0x0000FFFF);
     establecerValorOperando(cpu, &instr->op1, resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_ldh(CPU *cpu, Instruccion *instr) {
@@ -232,7 +257,7 @@ uint32_t instr_ldh(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = (val1 & 0x0000FFFF) | ((val2 & 0x0000FFFF) << 16);
     establecerValorOperando(cpu, &instr->op1, resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_rnd(CPU *cpu, Instruccion *instr) {
@@ -247,7 +272,7 @@ uint32_t instr_rnd(CPU *cpu, Instruccion *instr) {
         resultado = rand() % (limite + 1);
     }
     establecerValorOperando(cpu, &instr->op1, resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 //
@@ -265,7 +290,7 @@ uint32_t instr_jz(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_jp(CPU *cpu, Instruccion *instr) {
@@ -274,7 +299,7 @@ uint32_t instr_jp(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_jn(CPU *cpu, Instruccion *instr) {
@@ -283,7 +308,7 @@ uint32_t instr_jn(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_jnz(CPU *cpu, Instruccion *instr) {
@@ -292,7 +317,7 @@ uint32_t instr_jnz(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_jnp(CPU *cpu, Instruccion *instr) {
@@ -301,7 +326,7 @@ uint32_t instr_jnp(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_jnn(CPU *cpu, Instruccion *instr) {
@@ -310,7 +335,7 @@ uint32_t instr_jnn(CPU *cpu, Instruccion *instr) {
         cpu->regs[REG_IP] = direccion;
         return 0;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 
@@ -322,7 +347,7 @@ uint32_t instr_not(CPU *cpu, Instruccion *instr) {
     uint32_t resultado = ~val;
     establecerValorOperando(cpu, &instr->op1, resultado);
     actualizarCC(cpu, (uint32_t) resultado);
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
 uint32_t instr_stop(CPU *cpu, Instruccion *instr) {
@@ -330,6 +355,8 @@ uint32_t instr_stop(CPU *cpu, Instruccion *instr) {
     cpu->ejecutando = 0;
     return 0;
 }
+
+// ==== LLAMADAS AL SISTEMA ====
 
 uint32_t instr_sys(CPU *cpu, Instruccion *instr) {
     uint32_t syscall = obtenerValorOperando(cpu, &instr->op1);
@@ -341,14 +368,18 @@ uint32_t instr_sys(CPU *cpu, Instruccion *instr) {
             sysWrite(cpu);
             break;
         default:
-            fprintf(stderr, "Llamada al sistema no implementada: %d\n",
-                    syscall); // TODO Provisorio, modificar el mostrarError o algo pero bueno
+            fprintf(stderr, "Llamada al sistema no implementada: %d\n", syscall);
             break;
     }
-    return leerInstruccion(cpu, instr->direccion, instr);
+    return 1;
 }
 
-
+/**
+ * Lee datos del teclado y los almacena en memoria
+ * EAX: modo de entrada (decimal, hex, octal, binario, char)
+ * EDX: dirección de memoria donde almacenar
+ * ECX: cantidad (bits bajos) y tamaño (bits altos)
+ */
 void sysRead(CPU *cpu) {
     uint32_t modo = cpu->regs[REG_EAX];
     uint32_t direccion = cpu->regs[REG_EDX];
@@ -361,24 +392,23 @@ void sysRead(CPU *cpu) {
         uint32_t direccionLogica = direccion + (i * tamano);
         printf("[%04X]: ", direccionLogica);
 
-        if (modo & 0x10) { // binario
+        if (modo & 0x10) {
             char binStr[33];
             printf("Ingrese un numero en binario: ");
             scanf("%32s", binStr);
             valor = strtol(binStr, NULL, 2);
-        } else if (modo & 0x08) { // hexadecimal
+        } else if (modo & 0x08) {
             printf("Ingrese un numero en hexadecimal: ");
             scanf("%x", (unsigned int *) &valor);
-        } else if (modo & 0x04) { //octla
+        } else if (modo & 0x04) {
             printf("Ingrese un numero en octal: ");
             scanf("%o", (unsigned int *) &valor);
-        }
-        if (modo & 0x02) { // char
+        } else if (modo & 0x02) {
             char c;
             printf("Ingrese un caracter: ");
             scanf(" %c", &c);
             valor = (int32_t) c;
-        } else if (modo & 0x01) { // decimal
+        } else if (modo & 0x01) {
             printf("Ingrese un numero en decimal: ");
             scanf("%d", &valor);
         }
@@ -393,6 +423,12 @@ void sysRead(CPU *cpu) {
     }
 }
 
+/**
+ * Muestra datos de memoria en pantalla
+ * EAX: modo de salida (decimal, hex, octal, binario, char)
+ * EDX: dirección de memoria a mostrar
+ * ECX: cantidad (bits bajos) y tamaño (bits altos)
+ */
 void sysWrite(CPU *cpu) {
     uint32_t modo = cpu->regs[REG_EAX];
     uint32_t direccion = cpu->regs[REG_EDX];
@@ -408,39 +444,43 @@ void sysWrite(CPU *cpu) {
         if (tamano == 1) {
             valor =  leerMemoria8(cpu, direccionLogica);
         } else if (tamano == 2) {
-            valor = (int32_t) (int16_t) leerMemoria16(cpu, direccionLogica);
+            int16_t valor16_t = (int16_t) leerMemoria16(cpu, direccionLogica);
+            valor = (int32_t) valor16_t;
         } else if (tamano == 4) {
             valor = (int32_t) leerMemoria32(cpu, direccionLogica);
         }
 
         printf("[%04X]: ", direccionFisica);
 
-
-        if (modo & 0x10) { // binario
+        if (modo & 0x10) {
             if (modo & 0x0F) printf(" ");
             printf("0b");
             for (int bit = 31; bit >= 0; bit--) {
                 printf("%d", (valor >> bit) & 1);
             }
         }
-        if (modo & 0x08) { // hexadeicmal
+        if (modo & 0x08) {
             if (modo & 0x07) printf(" ");
             printf("0x%X", (unsigned int) valor);
         }
-        if (modo & 0x04) { // octal
+        if (modo & 0x04) {
             if (modo & 0x03) printf(" ");
             printf("0o%o", (unsigned int) valor);
         }
-        if (modo & 0x02) { // char
+        if (modo & 0x02) {
             if (modo & 0x01) printf(" ");
-            char c = valor & 0xFF;
-            if (c >= 32 && c <= 126) {
-                printf(" %c ", c);
-            } else {
-                printf(" . ");
+            printf(" '");
+            for (int byte = (tamano - 1) * 8; byte >= 0; byte -= 8) {
+                char c = (valor >> byte) & 0xFF;
+                if (c >= 32 && c <= 126) {
+                    printf("%c", c);
+                } else {
+                    printf(".");
+                }
             }
+            printf("'");
         }
-        if (modo & 0x01) { // decimal
+        if (modo & 0x01) {
             printf(" %d", valor);
         }
         printf("\n");

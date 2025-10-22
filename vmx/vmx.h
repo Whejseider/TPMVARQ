@@ -129,9 +129,9 @@ typedef struct {
 typedef struct {
     uint8_t tipo;
     union {
-        uint32_t valor;
+        int32_t valor;
         struct {
-            uint16_t offset;
+            int16_t offset;
             uint8_t codReg;
         } memoria;
     } datos;
