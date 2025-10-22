@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\TPMVARQ.dir/objects.a
+C:\MinGW64\bin\ar.exe qc CMakeFiles\TPMVARQ.dir/objects.a @CMakeFiles\TPMVARQ.dir\objects1.rsp
+C:\MinGW64\bin\gcc.exe -Wl,--whole-archive CMakeFiles\TPMVARQ.dir/objects.a -Wl,--no-whole-archive -o TPMVARQ.exe -Wl,--out-implib,libTPMVARQ.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\TPMVARQ.dir\linkLibs.rsp

@@ -1,6 +1,7 @@
 #include <time.h>
 #include "instructions.h"
 #include "../memory/memory.h"
+#include "../syscalls/syscalls.h"
 
 /**
  * Decodifica una instrucción desde memoria
@@ -360,129 +361,5 @@ uint32_t instr_stop(CPU *cpu, Instruccion *instr) {
 
 uint32_t instr_sys(CPU *cpu, Instruccion *instr) {
     uint32_t syscall = obtenerValorOperando(cpu, &instr->op1);
-    switch (syscall) {
-        case 1:
-            sysRead(cpu);
-            break;
-        case 2:
-            sysWrite(cpu);
-            break;
-        default:
-            fprintf(stderr, "Llamada al sistema no implementada: %d\n", syscall);
-            break;
-    }
-    return 1;
-}
-
-/**
- * Lee datos del teclado y los almacena en memoria
- * EAX: modo de entrada (decimal, hex, octal, binario, char)
- * EDX: dirección de memoria donde almacenar
- * ECX: cantidad (bits bajos) y tamaño (bits altos)
- */
-void sysRead(CPU *cpu) {
-    uint32_t modo = cpu->regs[REG_EAX];
-    uint32_t direccion = cpu->regs[REG_EDX];
-    uint32_t config = cpu->regs[REG_ECX];
-    uint16_t cantidad = config & 0xFFFF;
-    uint16_t tamano = (config >> 16) & 0xFFFF;
-
-    for (int i = 0; i < cantidad; i++) {
-        int32_t valor = 0;
-        uint32_t direccionLogica = direccion + (i * tamano);
-        printf("[%04X]: ", direccionLogica);
-
-        if (modo & 0x10) {
-            char binStr[33];
-            printf("Ingrese un numero en binario: ");
-            scanf("%32s", binStr);
-            valor = strtol(binStr, NULL, 2);
-        } else if (modo & 0x08) {
-            printf("Ingrese un numero en hexadecimal: ");
-            scanf("%x", (unsigned int *) &valor);
-        } else if (modo & 0x04) {
-            printf("Ingrese un numero en octal: ");
-            scanf("%o", (unsigned int *) &valor);
-        } else if (modo & 0x02) {
-            char c;
-            printf("Ingrese un caracter: ");
-            scanf(" %c", &c);
-            valor = (int32_t) c;
-        } else if (modo & 0x01) {
-            printf("Ingrese un numero en decimal: ");
-            scanf("%d", &valor);
-        }
-
-        if (tamano == 1) {
-            escribirMemoria8(cpu, direccionLogica, (uint8_t) valor);
-        } else if (tamano == 2) {
-            escribirMemoria16(cpu, direccionLogica, (uint16_t) valor);
-        } else if (tamano == 4) {
-            escribirMemoria32(cpu, direccionLogica, (uint32_t) valor);
-        }
-    }
-}
-
-/**
- * Muestra datos de memoria en pantalla
- * EAX: modo de salida (decimal, hex, octal, binario, char)
- * EDX: dirección de memoria a mostrar
- * ECX: cantidad (bits bajos) y tamaño (bits altos)
- */
-void sysWrite(CPU *cpu) {
-    uint32_t modo = cpu->regs[REG_EAX];
-    uint32_t direccion = cpu->regs[REG_EDX];
-    uint32_t config = cpu->regs[REG_ECX];
-    uint16_t cantidad = config & 0xFFFF;
-    uint16_t tamano = (config >> 16) & 0xFFFF;
-
-    for (int i = 0; i < cantidad; i++) {
-        uint32_t direccionLogica = direccion + (i * tamano);
-        uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, tamano);
-        int32_t valor = 0;
-
-        if (tamano == 1) {
-            valor =  leerMemoria8(cpu, direccionLogica);
-        } else if (tamano == 2) {
-            int16_t valor16_t = (int16_t) leerMemoria16(cpu, direccionLogica);
-            valor = (int32_t) valor16_t;
-        } else if (tamano == 4) {
-            valor = (int32_t) leerMemoria32(cpu, direccionLogica);
-        }
-
-        printf("[%04X]: ", direccionFisica);
-
-        if (modo & 0x10) {
-            if (modo & 0x0F) printf(" ");
-            printf("0b");
-            for (int bit = 31; bit >= 0; bit--) {
-                printf("%d", (valor >> bit) & 1);
-            }
-        }
-        if (modo & 0x08) {
-            if (modo & 0x07) printf(" ");
-            printf("0x%X", (unsigned int) valor);
-        }
-        if (modo & 0x04) {
-            if (modo & 0x03) printf(" ");
-            printf("0o%o", (unsigned int) valor);
-        }
-        if (modo & 0x02) {
-            if (modo & 0x01) printf(" ");
-            printf(" '");
-            for (int byte = (tamano - 1) * 8; byte >= 0; byte -= 8) {
-                char c = (valor >> byte) & 0xFF;
-                if (c >= 32 && c <= 126) {
-                    printf("%c", c);
-                } else {
-                    printf(".");
-                }
-            }
-            printf("'");
-        }
-        if (modo & 0x01) {
-            printf(" %d", valor);
-        }
-        printf("\n");
-    }
+    return ejecutarSyscall(cpu, syscall);
 }
