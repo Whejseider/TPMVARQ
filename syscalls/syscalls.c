@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "syscalls.h"
 #include "../memory/memory.h"
 #include <string.h>

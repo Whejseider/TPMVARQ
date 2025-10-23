@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "loader.h"
+#include "../vmx/vmx.h"
 #include "../dissasembler/dissasembler.h"
 #include "../utils/utils.h"
 

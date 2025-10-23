@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include <time.h>
 #include "instructions.h"
+#include "../vmx/vmx.h"
 #include "../memory/memory.h"
 #include "../syscalls/syscalls.h"
 #include "../utils/utils.h"

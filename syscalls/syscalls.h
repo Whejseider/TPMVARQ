@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "../vmx/vmx.h"
+#include "../vmx/cpu.h"
 
 // ==== CONSTANTES DE LLAMADAS AL SISTEMA ====
 

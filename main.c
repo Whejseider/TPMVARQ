@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include "vmx/vmx.h"
 #include "loader/loader.h"

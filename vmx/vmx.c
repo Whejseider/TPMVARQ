@@ -1,6 +1,9 @@
 #include <string.h>
 #include "vmx.h"
 #include "../instructions/instructions.h"
+#include "../utils/utils.h"
+
+static FuncionInstruccion tablaInstrucciones[CANTIDAD_INSTRUCCIONES] = {0};
 
 /**
  * Inicializa la tabla de instrucciones con punteros a funciones

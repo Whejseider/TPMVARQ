@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../vmx/vmx.h"
+#include "../vmx/cpu.h"
 
 /**
  * Lee la instrucción a ejecutar y carga los registros

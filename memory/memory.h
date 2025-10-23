@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../vmx/vmx.h"
+#include "../vmx/cpu.h"
 
 /**
  * Traduce una dirección de memoria lógica a una dirección de memoria física

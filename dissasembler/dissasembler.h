@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../vmx/vmx.h"
+#include "../vmx/cpu.h"
 
 void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo);
 void mostrarMnemonico(uint8_t opcode);

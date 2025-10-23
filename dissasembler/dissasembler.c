@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "dissasembler.h"
 #include "../instructions/instructions.h"
 
