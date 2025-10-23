@@ -22,8 +22,8 @@ enum registros {
     REG_OPC,
     REG_OP1,
     REG_OP2,
-    REG_RES7,
-    REG_RES8,
+    REG_SP,
+    REG_BP,
     REG_RES9,
     REG_EAX,
     REG_EBX,
@@ -43,10 +43,10 @@ enum registros {
     REG_RES25,
     REG_CS,
     REG_DS,
-    REG_RES28,
-    REG_RES29,
-    REG_RES30,
-    REG_RES31
+    REG_ES,
+    REG_SS,
+    REG_KS,
+    REG_PS
 };
 
 /**
