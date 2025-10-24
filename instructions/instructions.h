@@ -369,3 +369,7 @@ uint32_t instr_sys(CPU *cpu, Instruccion *instr);
  * @return
  */
 uint32_t instr_stop(CPU *cpu, Instruccion *instr);
+uint32_t instr_push(CPU *cpu, Instruccion *instr);
+uint32_t instr_pop(CPU *cpu, Instruccion *instr);
+uint32_t instr_call(CPU *cpu, Instruccion *instr);
+uint32_t instr_ret(CPU *cpu, Instruccion *instr);

@@ -11,8 +11,12 @@
 
 // ==== CONSTANTES DE LLAMADAS AL SISTEMA ====
 
-#define SYS_READ  1    // Leer datos del teclado
-#define SYS_WRITE 2    // Escribir datos a pantalla
+#define SYS_READ  0x01    // Leer datos del teclado (legacy)
+#define SYS_WRITE 0x02    // Escribir datos a pantalla (legacy)
+#define SYS_STRING_READ  0x03    // Leer string desde teclado hacia memoria
+#define SYS_STRING_WRITE 0x04    // Escribir string desde memoria
+#define SYS_CLEAR_SCREEN 0x07    // Limpiar pantalla
+#define SYS_BREAKPOINT   0x0F    // Generar snapshot .vmi
 
 // ==== MÁSCARAS DE MODO DE ENTRADA/SALIDA ====
 
@@ -56,6 +60,32 @@ void sysRead(CPU *cpu);
  * @param cpu estructura de la CPU
  */
 void sysWrite(CPU *cpu);
+
+/**
+ * Lee un string desde el teclado y lo almacena en memoria
+ * 
+ * @param cpu estructura de la CPU
+ */
+void sysStringRead(CPU *cpu);
+
+/**
+ * Muestra un string desde memoria en pantalla
+ * 
+ * @param cpu estructura de la CPU
+ */
+void sysStringWrite(CPU *cpu);
+
+/**
+ * Limpia la pantalla
+ */
+void sysClearScreen(void);
+
+/**
+ * Genera un snapshot .vmi
+ * 
+ * @param cpu estructura de la CPU
+ */
+void sysBreakpoint(CPU *cpu);
 
 // ==== FUNCIONES AUXILIARES ====
 

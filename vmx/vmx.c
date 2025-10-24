@@ -2,6 +2,7 @@
 #include "vmx.h"
 #include "../instructions/instructions.h"
 #include "../utils/utils.h"
+#include "../memory/memory.h"
 
 static FuncionInstruccion tablaInstrucciones[CANTIDAD_INSTRUCCIONES] = {0};
 
@@ -21,6 +22,10 @@ void inicializarTablaInstrucciones() {
     tablaInstrucciones[OP_JNP] = instr_jnp;
     tablaInstrucciones[OP_JNN] = instr_jnn;
     tablaInstrucciones[OP_NOT] = instr_not;
+    tablaInstrucciones[OP_PUSH] = instr_push;
+    tablaInstrucciones[OP_POP] = instr_pop;
+    tablaInstrucciones[OP_CALL] = instr_call;
+    tablaInstrucciones[OP_RET] = instr_ret;
     tablaInstrucciones[OP_STOP] = instr_stop;
     tablaInstrucciones[OP_MOV] = instr_mov;
     tablaInstrucciones[OP_ADD] = instr_add;
@@ -45,26 +50,97 @@ void inicializarTablaInstrucciones() {
  * CS: segmento de código (0)
  * DS: segmento de datos (1)
  */
-void inicializaTablaSegmentos(CPU *cpu, uint16_t tamanoCodigo) {
-    cpu->segmentos[0].base = 0;
-    cpu->segmentos[0].tamano = tamanoCodigo;
+void inicializaTablaSegmentos(CPU *cpu, LayoutSegmentos *layout) {
+    uint32_t cursor = 0;
+    cpu->cantSegmentos = 0;
 
-    cpu->segmentos[1].base = tamanoCodigo;
-    cpu->segmentos[1].tamano = RAM - tamanoCodigo;
+    uint16_t tamanos[MAX_SEGMENTOS] = {
+            layout->tamanoPS,
+            layout->tamanoKS,
+            layout->tamanoCS,
+            layout->tamanoDS,
+            layout->tamanoES,
+            layout->tamanoSS
+    };
+
+    for (int i = 0; i < MAX_SEGMENTOS; ++i) {
+        uint16_t tamano = tamanos[i];
+        if (tamano == 0) {
+            continue;
+        }
+
+        if ((size_t)cursor + tamano > cpu->tamMem) {
+            terminarConError(VMX_ERROR_MEMORY_ACCESS, "Memoria insuficiente para segmentos");
+        }
+
+        cpu->segmentos[cpu->cantSegmentos].base = (uint16_t)cursor;
+        cpu->segmentos[cpu->cantSegmentos].tamano = tamano;
+        cursor += tamano;
+        cpu->cantSegmentos++;
+    }
 }
 
 /**
  * Inicializa los registros de la CPU con valores por defecto
  * Configura CS, DS e IP para comenzar la ejecución
  */
-void inicializarRegistros(CPU *cpu) {
+void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint32_t argvPtr) {
     memset(cpu->regs, 0, sizeof(cpu->regs));
 
-    cpu->regs[REG_CS] = 0x00000000;
-    cpu->regs[REG_DS] = 0x00010000;
+    uint16_t indicesSegmento[MAX_SEGMENTOS];
+    for (int i = 0; i < MAX_SEGMENTOS; ++i) {
+        indicesSegmento[i] = (uint16_t)-1;
+    }
+
+    uint16_t tamanos[MAX_SEGMENTOS] = {
+            layout->tamanoPS,
+            layout->tamanoKS,
+            layout->tamanoCS,
+            layout->tamanoDS,
+            layout->tamanoES,
+            layout->tamanoSS
+    };
+
+    for (uint16_t idx = 0, seg = 0; idx < cpu->cantSegmentos && seg < MAX_SEGMENTOS; ++seg) {
+        if (tamanos[seg] == 0) {
+            continue;
+        }
+        indicesSegmento[seg] = idx;
+        idx++;
+    }
+
+    cpu->regs[REG_PS] = (indicesSegmento[SEG_PS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_PS] << 16);
+    cpu->regs[REG_KS] = (indicesSegmento[SEG_KS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_KS] << 16);
+    cpu->regs[REG_CS] = (indicesSegmento[SEG_CS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_CS] << 16) | layout->entryPoint;
+    cpu->regs[REG_DS] = (indicesSegmento[SEG_DS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_DS] << 16);
+    cpu->regs[REG_ES] = (indicesSegmento[SEG_ES] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_ES] << 16);
+    cpu->regs[REG_SS] = (indicesSegmento[SEG_SS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_SS] << 16);
+
     cpu->regs[REG_IP] = cpu->regs[REG_CS];
 
+    if (indicesSegmento[SEG_SS] == (uint16_t)-1) {
+        cpu->regs[REG_SP] = 0xFFFFFFFF;
+    } else {
+        uint16_t baseSS = cpu->segmentos[indicesSegmento[SEG_SS]].base;
+        uint16_t tamSS = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
+        cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | (baseSS + tamSS);
+    }
+
     cpu->ejecutando = 1;
+
+    if (indicesSegmento[SEG_SS] != (uint16_t)-1) {
+        uint16_t baseSS = cpu->segmentos[indicesSegmento[SEG_SS]].base;
+        uint32_t tope = baseSS + cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
+
+        tope -= 4;
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, 0xFFFFFFFF);
+        tope -= 4;
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argc);
+        tope -= 4;
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argvPtr);
+
+        cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope;
+    }
 }
 
 /**

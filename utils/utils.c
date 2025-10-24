@@ -31,6 +31,12 @@ void mostrarErrorConCodigo(vmx_error_t codigo, const char *mensaje) {
         case VMX_ERROR_INVALID_VERSION:
             codigoStr = "Versión no soportada";
             break;
+        case VMX_ERROR_STACK_OVERFLOW:
+            codigoStr = "Stack overflow";
+            break;
+        case VMX_ERROR_STACK_UNDERFLOW:
+            codigoStr = "Stack underflow";
+            break;
         default:
             codigoStr = "Error desconocido";
             break;

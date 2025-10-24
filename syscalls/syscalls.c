@@ -1,7 +1,14 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "syscalls.h"
 #include "../memory/memory.h"
-#include <string.h>
+#include "../image/image.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 /**
  * Ejecuta una llamada al sistema según el número especificado
@@ -10,15 +17,26 @@ uint32_t ejecutarSyscall(CPU *cpu, uint32_t syscall) {
     switch (syscall) {
         case SYS_READ:
             sysRead(cpu);
-            break;
+            return 1;
         case SYS_WRITE:
             sysWrite(cpu);
-            break;
+            return 1;
+        case SYS_STRING_READ:
+            sysStringRead(cpu);
+            return 1;
+        case SYS_STRING_WRITE:
+            sysStringWrite(cpu);
+            return 1;
+        case SYS_CLEAR_SCREEN:
+            sysClearScreen();
+            return 1;
+        case SYS_BREAKPOINT:
+            sysBreakpoint(cpu);
+            return 1;
         default:
-            fprintf(stderr, "Llamada al sistema no implementada: %d\n", syscall);
+            fprintf(stderr, "Llamada al sistema no implementada: %u\n", syscall);
             return 0;
     }
-    return 1;
 }
 
 /**
@@ -84,6 +102,82 @@ void sysWrite(CPU *cpu) {
         printf("[%04X]: ", direccionFisica);
         mostrarValorPorModo(valor, modo, tamano);
         printf("\n");
+    }
+}
+
+void sysStringRead(CPU *cpu) {
+    uint32_t destino = cpu->regs[REG_EDX];
+    uint32_t maxLongitud = cpu->regs[REG_ECX];
+    if (maxLongitud == 0 || maxLongitud > 65535) {
+        maxLongitud = 65535;
+    }
+
+    char *buffer = (char *) malloc(maxLongitud + 1);
+    if (!buffer) {
+        fprintf(stderr, "No se pudo alocar memoria para string read\n");
+        return;
+    }
+
+    printf("> ");
+    if (!fgets(buffer, (int) maxLongitud + 1, stdin)) {
+        buffer[0] = '\0';
+    }
+
+    size_t len = strcspn(buffer, "\n");
+    buffer[len] = '\0';
+
+    for (size_t i = 0; i <= len; ++i) {
+        escribirMemoria8(cpu, destino + (uint32_t)i, (uint8_t) buffer[i]);
+    }
+
+    free(buffer);
+    cpu->regs[REG_AC] = (uint32_t) len;
+}
+
+void sysStringWrite(CPU *cpu) {
+    uint32_t origen = cpu->regs[REG_EDX];
+    uint32_t maxLongitud = cpu->regs[REG_ECX];
+    if (maxLongitud == 0 || maxLongitud > 65535) {
+        maxLongitud = 65535;
+    }
+
+    for (uint32_t i = 0; i < maxLongitud; ++i) {
+        uint8_t c = leerMemoria8(cpu, origen + i);
+        if (c == '\0') {
+            break;
+        }
+        putchar((int) c);
+    }
+    fflush(stdout);
+}
+
+void sysClearScreen(void) {
+#ifdef _WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD count;
+    DWORD cellCount;
+    COORD homeCoords = {0, 0};
+
+    if (hConsole == INVALID_HANDLE_VALUE) return;
+
+    if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) return;
+    cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+
+    FillConsoleOutputCharacter(hConsole, (TCHAR) ' ', cellCount, homeCoords, &count);
+    FillConsoleOutputAttribute(hConsole, csbi.wAttributes, cellCount, homeCoords, &count);
+    SetConsoleCursorPosition(hConsole, homeCoords);
+#else
+    printf("\033[2J\033[H");
+#endif
+}
+
+void sysBreakpoint(CPU *cpu) {
+    const char *nombreImagen = "snapshot.vmi";
+    if (guardarImagen(nombreImagen, cpu)) {
+        printf("[BREAKPOINT] Estado guardado en %s\n", nombreImagen);
+    } else {
+        fprintf(stderr, "[BREAKPOINT] Error al guardar %s\n", nombreImagen);
     }
 }
 

@@ -9,7 +9,7 @@ uint32_t traducirDireccion(CPU *cpu, uint32_t direccionLogica, uint32_t tamano) 
     uint16_t segmento = (direccionLogica >> 16) & 0xFFFF;
     uint16_t offset = direccionLogica & 0xFFFF;
 
-    if (segmento >= MAX_SEGMENTOS) {
+    if (segmento >= cpu->cantSegmentos) {
         terminarConError(VMX_ERROR_SEGMENT_FAULT, "segmento inválido");
     }
 
@@ -64,7 +64,9 @@ void escribirMemoria8(CPU *cpu, uint32_t direccion, uint8_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) (int8_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    cpu->regs[REG_MAR] = (1 << 16) | (direccionFisica & 0xFFFF);
+    uint32_t segmento = (direccion >> 16) & 0xFFu;
+    uint32_t offset = direccion & 0xFFFFu;
+    cpu->regs[REG_MAR] = (segmento << 24) | offset;
     cpu->mem[direccionFisica] = valor;
 }
 
@@ -73,7 +75,9 @@ void escribirMemoria16(CPU *cpu, uint32_t direccion, uint16_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) (int16_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    cpu->regs[REG_MAR] = (2 << 16) | (direccionFisica & 0xFFFF);
+    uint32_t segmento = (direccion >> 16) & 0xFFu;
+    uint32_t offset = direccion & 0xFFFFu;
+    cpu->regs[REG_MAR] = (segmento << 24) | offset;
 
     cpu->mem[direccionFisica] = (uint8_t) ((valor >> 8) & 0xFF);
     cpu->mem[direccionFisica + 1] = (uint8_t) (valor & 0xFF);
@@ -84,7 +88,9 @@ void escribirMemoria32(CPU *cpu, uint32_t direccion, uint32_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    cpu->regs[REG_MAR] = (4 << 16) | (direccionFisica & 0xFFFF);
+    uint32_t segmento = (direccion >> 16) & 0xFFu;
+    uint32_t offset = direccion & 0xFFFFu;
+    cpu->regs[REG_MAR] = (segmento << 24) | offset;
 
     for (int i = 0; i < 4; i++) {
         cpu->mem[direccionFisica + i] = (uint8_t) ((valor >> ((3 - i) * 8)) & 0xFF);

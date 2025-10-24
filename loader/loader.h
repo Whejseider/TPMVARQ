@@ -20,21 +20,14 @@ typedef struct {
     uint16_t entryPoint;
 } CabeceraVMX_V2;
 
-typedef struct {
-    uint16_t tamanoPS;
-    uint16_t tamanoKS;
-    uint16_t tamanoCS;
-    uint16_t tamanoDS;
-    uint16_t tamanoES;
-    uint16_t tamanoSS;
-} LayoutSegmentos;
-
 /**
  * Carga los datos del programa desde el archivo .vmx
  * @param nombreArchivo
  * @param cpu
  * @param mostrarDisasm - parámetro opcional [-d] que muestra el código en assembler
+ * @param params lista de parámetros para la subrutina principal
+ * @param paramCount cantidad de parámetros
  * @return
  */
-int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm);
+int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm, char **params, uint16_t paramCount);
 

@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include "instructions.h"
-#include "../vmx/vmx.h"
 #include "../memory/memory.h"
-#include "../syscalls/syscalls.h"
 #include "../utils/utils.h"
+#include "../vmx/vmx.h"
+#include "../syscalls/syscalls.h"
 
 /**
  * Decodifica una instrucción desde memoria
@@ -15,6 +15,103 @@
  * @param instr estructura donde guardar la instrucción decodificada
  * @return tamaño en bytes de la instrucción
  */
+static uint8_t anchoDesdeSector(uint8_t sector) {
+    switch (sector) {
+        case 0: return 4; // registro completo
+        case 1: return 1; // byte bajo
+        case 2: return 1; // byte alto
+        case 3: return 2; // palabra
+        default: return 4;
+    }
+}
+
+static uint8_t bytesDesdeCodigo(uint8_t codigo) {
+    switch (codigo & 0x03) {
+        case 0x00: return 4; // long
+        case 0x02: return 2; // word
+        case 0x03: return 1; // byte
+        default: return 4;
+    }
+}
+
+static uint8_t leerByteInstr(CPU *cpu, uint32_t direccionLogica) {
+    uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, 1);
+    return cpu->mem[direccionFisica];
+}
+
+static uint16_t leerWordInstr(CPU *cpu, uint32_t direccionLogica) {
+    uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, 2);
+    uint16_t alto = cpu->mem[direccionFisica];
+    uint16_t bajo = cpu->mem[direccionFisica + 1];
+    return (uint16_t)((alto << 8) | bajo);
+}
+
+static int esRegistroSegmento(uint8_t reg) {
+    return reg == REG_CS || reg == REG_DS || reg == REG_ES || reg == REG_SS || reg == REG_KS || reg == REG_PS;
+}
+
+static uint32_t obtenerIndiceSegmentoPila(CPU *cpu) {
+    if (cpu->regs[REG_SP] == 0xFFFFFFFF) {
+        terminarConError(VMX_ERROR_STACK_UNDERFLOW, "stack no inicializada");
+    }
+    return (cpu->regs[REG_SP] >> 16) & 0xFFFF;
+}
+
+static uint16_t obtenerTamanioSegmentoPila(CPU *cpu, uint32_t indice) {
+    if (indice >= cpu->cantSegmentos) {
+        terminarConError(VMX_ERROR_STACK_UNDERFLOW, "segmento de pila inválido");
+    }
+    return cpu->segmentos[indice].tamano;
+}
+
+static uint16_t obtenerOffsetPila(CPU *cpu) {
+    return (uint16_t)(cpu->regs[REG_SP] & 0xFFFF);
+}
+
+static void actualizarSP(CPU *cpu, uint32_t indice, uint16_t offset) {
+    cpu->regs[REG_SP] = ((uint32_t) indice << 16) | offset;
+}
+
+static void stackPush32(CPU *cpu, uint32_t valor) {
+    uint32_t indice = obtenerIndiceSegmentoPila(cpu);
+    uint16_t tamSeg = obtenerTamanioSegmentoPila(cpu, indice);
+    uint16_t offset = obtenerOffsetPila(cpu);
+
+    if (offset < 4 || tamSeg < 4) {
+        terminarConError(VMX_ERROR_STACK_OVERFLOW, "stack overflow");
+    }
+
+    offset -= 4;
+    if (offset >= tamSeg) {
+        terminarConError(VMX_ERROR_STACK_OVERFLOW, "stack overflow");
+    }
+
+    uint32_t direccion = ((uint32_t) indice << 16) | offset;
+    escribirMemoria32(cpu, direccion, valor);
+    actualizarSP(cpu, indice, offset);
+}
+
+static uint32_t stackPop32(CPU *cpu) {
+    uint32_t indice = obtenerIndiceSegmentoPila(cpu);
+    uint16_t tamSeg = obtenerTamanioSegmentoPila(cpu, indice);
+    uint16_t offset = obtenerOffsetPila(cpu);
+
+    if (offset >= tamSeg) {
+        terminarConError(VMX_ERROR_STACK_UNDERFLOW, "stack underflow");
+    }
+
+    uint32_t direccion = ((uint32_t) indice << 16) | offset;
+    uint32_t valor = leerMemoria32(cpu, direccion);
+
+    offset += 4;
+    if (offset > tamSeg) {
+        offset = tamSeg;
+    }
+
+    actualizarSP(cpu, indice, offset);
+    return valor;
+}
+
 uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
     uint32_t pos = 0;
     uint8_t primerByte;
@@ -36,38 +133,54 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
     instr->opcode = primerByte & 0x1F;
 
     instr->op2.tipo = tipoOp2;
+    instr->op2.ancho = 4;
     if (tipoOp2 == TIPO_REGISTRO) {
-        instr->op2.datos.valor = leerMemoria8(cpu, direccion + pos) & 0x1F;
+        uint8_t descriptor = leerByteInstr(cpu, direccion + pos);
+        instr->op2.datos.registro.codReg = descriptor & 0x1F;
+        instr->op2.datos.registro.sector = (descriptor >> 6) & 0x03;
+        instr->op2.ancho = anchoDesdeSector(instr->op2.datos.registro.sector);
         pos += 1;
     } else if (tipoOp2 == TIPO_INMEDIATO) {
-        int16_t valor16 = (int16_t) leerMemoria16(cpu, direccion + pos);
+        int16_t valor16 = (int16_t) leerWordInstr(cpu, direccion + pos);
         instr->op2.datos.valor = (int32_t) valor16;
+        instr->op2.ancho = 2;
         pos += 2;
     } else if (tipoOp2 == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
-        instr->op2.datos.memoria.codReg = leerMemoria8(cpu, dirLog) & 0x1F;
-        int16_t offset16 = (int16_t) leerMemoria16(cpu, dirLog + 1);
-        instr->op2.datos.memoria.offset = (int32_t) offset16;
+        uint8_t descriptor = leerByteInstr(cpu, dirLog);
+        instr->op2.datos.memoria.codReg = descriptor & 0x1F;
+        instr->op2.datos.memoria.tam = (descriptor >> 6) & 0x03;
+        instr->op2.ancho = bytesDesdeCodigo(instr->op2.datos.memoria.tam);
+        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog + 1);
+        instr->op2.datos.memoria.offset = offset16;
         pos += 3;
-    } else if (tipoOp2 == TIPO_NINGUNO) {
+    } else {
         instr->op2.datos.valor = 0;
     }
 
     instr->op1.tipo = tipoOp1;
+    instr->op1.ancho = 4;
     if (tipoOp1 == TIPO_REGISTRO) {
-        instr->op1.datos.valor = leerMemoria8(cpu, direccion + pos) & 0x1F;
+        uint8_t descriptor = leerByteInstr(cpu, direccion + pos);
+        instr->op1.datos.registro.codReg = descriptor & 0x1F;
+        instr->op1.datos.registro.sector = (descriptor >> 6) & 0x03;
+        instr->op1.ancho = anchoDesdeSector(instr->op1.datos.registro.sector);
         pos += 1;
     } else if (tipoOp1 == TIPO_INMEDIATO) {
-        int16_t valor16 = (int16_t) leerMemoria16(cpu, direccion + pos);
+        int16_t valor16 = (int16_t) leerWordInstr(cpu, direccion + pos);
         instr->op1.datos.valor = (int32_t) valor16;
+        instr->op1.ancho = 2;
         pos += 2;
     } else if (tipoOp1 == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
-        instr->op1.datos.memoria.codReg = leerMemoria8(cpu, dirLog) & 0x1F;
-        int16_t offset16 = (int16_t) leerMemoria16(cpu, dirLog + 1);
-        instr->op1.datos.memoria.offset = (int32_t) offset16;
+        uint8_t descriptor = leerByteInstr(cpu, dirLog);
+        instr->op1.datos.memoria.codReg = descriptor & 0x1F;
+        instr->op1.datos.memoria.tam = (descriptor >> 6) & 0x03;
+        instr->op1.ancho = bytesDesdeCodigo(instr->op1.datos.memoria.tam);
+        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog + 1);
+        instr->op1.datos.memoria.offset = offset16;
         pos += 3;
-    } else if (tipoOp1 == TIPO_NINGUNO) {
+    } else {
         instr->op1.datos.valor = 0;
     }
 
@@ -80,16 +193,38 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
  */
 uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
     switch (op->tipo) {
-        case TIPO_REGISTRO:
-            return cpu->regs[op->datos.valor];
+        case TIPO_REGISTRO: {
+            uint8_t reg = op->datos.registro.codReg;
+            uint8_t sector = op->datos.registro.sector;
+            uint32_t valor = cpu->regs[reg];
+            switch (sector) {
+                case 0:
+                    return valor;
+                case 1:
+                    return (uint32_t)(int8_t)(valor & 0xFF);
+                case 2:
+                    return (uint32_t)(int8_t)((valor >> 8) & 0xFF);
+                case 3:
+                    return (uint32_t)(int16_t)(valor & 0xFFFF);
+                default:
+                    return valor;
+            }
+        }
         case TIPO_INMEDIATO:
             return (uint32_t) op->datos.valor;
         case TIPO_MEMORIA: {
             uint8_t reg = op->datos.memoria.codReg;
             int32_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
-            uint32_t dirLog = base + (uint32_t) desplazamiento;
-            return leerMemoria32(cpu, dirLog);
+            uint32_t dirLog = base + (uint32_t) (int32_t)desplazamiento;
+            uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
+            if (bytes == 1) {
+                return (uint32_t)(int8_t) leerMemoria8(cpu, dirLog);
+            } else if (bytes == 2) {
+                return (uint32_t)(int16_t) leerMemoria16(cpu, dirLog);
+            } else {
+                return leerMemoria32(cpu, dirLog);
+            }
         }
         default:
             return 0;
@@ -102,15 +237,42 @@ uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
  */
 void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
     switch (op->tipo) {
-        case TIPO_REGISTRO:
-            cpu->regs[op->datos.valor] = (int32_t) valor;
+        case TIPO_REGISTRO: {
+            uint8_t reg = op->datos.registro.codReg;
+            uint8_t sector = op->datos.registro.sector;
+            uint32_t original = cpu->regs[reg];
+            switch (sector) {
+                case 0:
+                    cpu->regs[reg] = valor;
+                    break;
+                case 1:
+                    cpu->regs[reg] = (original & 0xFFFFFF00u) | (valor & 0xFFu);
+                    break;
+                case 2:
+                    cpu->regs[reg] = (original & 0xFFFF00FFu) | ((valor & 0xFFu) << 8);
+                    break;
+                case 3:
+                    cpu->regs[reg] = (original & 0xFFFF0000u) | (valor & 0xFFFFu);
+                    break;
+                default:
+                    cpu->regs[reg] = valor;
+                    break;
+            }
             break;
+        }
         case TIPO_MEMORIA: {
             uint8_t reg = op->datos.memoria.codReg;
             int32_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
-            uint32_t dirLog = base + (uint32_t) desplazamiento;
-            escribirMemoria32(cpu, dirLog, valor);
+            uint32_t dirLog = base + (uint32_t) (int32_t)desplazamiento;
+            uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
+            if (bytes == 1) {
+                escribirMemoria8(cpu, dirLog, (uint8_t) (valor & 0xFFu));
+            } else if (bytes == 2) {
+                escribirMemoria16(cpu, dirLog, (uint16_t) (valor & 0xFFFFu));
+            } else {
+                escribirMemoria32(cpu, dirLog, valor);
+            }
             break;
         }
         default:
@@ -356,6 +518,40 @@ uint32_t instr_not(CPU *cpu, Instruccion *instr) {
 uint32_t instr_stop(CPU *cpu, Instruccion *instr) {
     cpu->regs[REG_IP] = 0xFFFFFFFF;
     cpu->ejecutando = 0;
+    return 0;
+}
+
+static uint32_t fetchOperandValue(CPU *cpu, Operando *op) {
+    return obtenerValorOperando(cpu, op);
+}
+
+static void writeOperandValue(CPU *cpu, Operando *op, uint32_t valor) {
+    establecerValorOperando(cpu, op, valor);
+}
+
+uint32_t instr_push(CPU *cpu, Instruccion *instr) {
+    uint32_t valor = fetchOperandValue(cpu, &instr->op1);
+    stackPush32(cpu, valor);
+    return 0;
+}
+
+uint32_t instr_pop(CPU *cpu, Instruccion *instr) {
+    uint32_t valor = stackPop32(cpu);
+    writeOperandValue(cpu, &instr->op1, valor);
+    return 0;
+}
+
+uint32_t instr_call(CPU *cpu, Instruccion *instr) {
+    uint32_t direccionRetorno = cpu->regs[REG_IP];
+    stackPush32(cpu, direccionRetorno);
+    uint32_t destino = fetchOperandValue(cpu, &instr->op1);
+    cpu->regs[REG_IP] = destino;
+    return 0;
+}
+
+uint32_t instr_ret(CPU *cpu, Instruccion *instr) {
+    uint32_t direccion = stackPop32(cpu);
+    cpu->regs[REG_IP] = direccion;
     return 0;
 }
 

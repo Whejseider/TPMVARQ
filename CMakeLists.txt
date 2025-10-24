@@ -18,4 +18,7 @@ add_executable(TPMVARQ
         syscalls/syscalls.c
         syscalls/syscalls.h
         utils/utils.c
-        utils/utils.h)
+        utils/utils.h
+        image/image.c
+        image/image.h
+)

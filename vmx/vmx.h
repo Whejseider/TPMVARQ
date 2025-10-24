@@ -4,8 +4,8 @@
 
 #include "cpu.h"
 
-void inicializaTablaSegmentos(CPU *cpu, uint16_t tamanoCodigo);
-void inicializarRegistros(CPU *cpu);
+void inicializaTablaSegmentos(CPU *cpu, LayoutSegmentos *layout);
+void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint32_t argvPtr);
 void vmxRun(CPU *cpu);
 
 void actualizarCC(CPU *cpu, uint32_t resultado);
