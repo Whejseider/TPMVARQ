@@ -32,6 +32,10 @@ uint8_t leerMemoria8(CPU *cpu, uint32_t direccion) {
     uint32_t direccionFisica = traducirDireccion(cpu, direccion, 1);
     uint8_t valor = cpu->mem[direccionFisica];
 
+    cpu->regs[REG_LAR] = direccion;
+    cpu->regs[REG_MAR] = (1u << 16) | (direccionFisica & 0xFFFF);
+    cpu->regs[REG_MBR] = (int32_t)(int8_t)valor;
+
     return valor;
 }
 
@@ -41,9 +45,13 @@ uint16_t leerMemoria16(CPU *cpu, uint32_t direccion) {
     uint8_t byteAlto = cpu->mem[direccionFisica];
     uint8_t byteBajo = cpu->mem[direccionFisica + 1];
 
-    int16_t valor = (int16_t) ((byteAlto << 8) | byteBajo);
-
-    return (uint16_t) valor;
+    uint16_t valor = (uint16_t)((byteAlto << 8) | byteBajo);
+    
+    cpu->regs[REG_LAR] = direccion;
+    cpu->regs[REG_MAR] = (2u << 16) | (direccionFisica & 0xFFFF);
+    cpu->regs[REG_MBR] = (int32_t)(int16_t)valor;
+    
+    return valor;
 }
 
 uint32_t leerMemoria32(CPU *cpu, uint32_t direccion) {
@@ -51,8 +59,12 @@ uint32_t leerMemoria32(CPU *cpu, uint32_t direccion) {
 
     uint32_t valor = 0;
     for (int i = 0; i < 4; i++) {
-        valor |= ((uint32_t)cpu->mem[direccionFisica + i]) << ((3 - i) * 8);
+        valor = (valor << 8) | cpu->mem[direccionFisica + i];
     }
+
+    cpu->regs[REG_LAR] = direccion;
+    cpu->regs[REG_MAR] = (4u << 16) | (direccionFisica & 0xFFFF);
+    cpu->regs[REG_MBR] = (int32_t)valor;
 
     return (uint32_t) valor;
 }
@@ -64,9 +76,7 @@ void escribirMemoria8(CPU *cpu, uint32_t direccion, uint8_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) (int8_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    uint32_t segmento = (direccion >> 16) & 0xFFu;
-    uint32_t offset = direccion & 0xFFFFu;
-    cpu->regs[REG_MAR] = (segmento << 24) | offset;
+    cpu->regs[REG_MAR] = (1u << 16) | (direccionFisica & 0xFFFF);
     cpu->mem[direccionFisica] = valor;
 }
 
@@ -75,9 +85,7 @@ void escribirMemoria16(CPU *cpu, uint32_t direccion, uint16_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) (int16_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    uint32_t segmento = (direccion >> 16) & 0xFFu;
-    uint32_t offset = direccion & 0xFFFFu;
-    cpu->regs[REG_MAR] = (segmento << 24) | offset;
+    cpu->regs[REG_MAR] = (2u << 16) | (direccionFisica & 0xFFFF);
 
     cpu->mem[direccionFisica] = (uint8_t) ((valor >> 8) & 0xFF);
     cpu->mem[direccionFisica + 1] = (uint8_t) (valor & 0xFF);
@@ -88,9 +96,7 @@ void escribirMemoria32(CPU *cpu, uint32_t direccion, uint32_t valor) {
 
     cpu->regs[REG_MBR] = (int32_t) valor;
     cpu->regs[REG_LAR] = direccion;
-    uint32_t segmento = (direccion >> 16) & 0xFFu;
-    uint32_t offset = direccion & 0xFFFFu;
-    cpu->regs[REG_MAR] = (segmento << 24) | offset;
+    cpu->regs[REG_MAR] = (4u << 16) | (direccionFisica & 0xFFFF);
 
     for (int i = 0; i < 4; i++) {
         cpu->mem[direccionFisica + i] = (uint8_t) ((valor >> ((3 - i) * 8)) & 0xFF);

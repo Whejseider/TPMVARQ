@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
 
     CPU cpu;
     memset(&cpu, 0, sizeof(CPU));
+    cpu.vmiFile = vmiFile;
 
     int ejecucionExitosa = 0;
 

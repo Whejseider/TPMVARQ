@@ -3,6 +3,7 @@
 #include "../instructions/instructions.h"
 #include "../utils/utils.h"
 #include "../memory/memory.h"
+#include "../syscalls/syscalls.h"
 
 static FuncionInstruccion tablaInstrucciones[CANTIDAD_INSTRUCCIONES] = {0};
 
@@ -150,6 +151,7 @@ void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint
 void vmxRun(CPU *cpu) {
     Instruccion instr;
     uint32_t tamanoInstr;
+    int pasoAPaso = 0;
 
     inicializarTablaInstrucciones();
 
@@ -175,6 +177,8 @@ void vmxRun(CPU *cpu) {
             uint32_t valor = ((uint32_t)instr.op1.datos.memoria.codReg << 16) |
                              ((uint32_t)offsetSigno & 0x0000FFFF);
             cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | (valor & 0x00FFFFFF);
+        } else if (instr.op1.tipo == TIPO_REGISTRO) {
+            cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | instr.op1.datos.registro.codReg;
         } else {
             int32_t valorConSigno = instr.op1.datos.valor;
             cpu->regs[REG_OP1] = (instr.op1.tipo << 24) | ((uint32_t)valorConSigno & 0x00FFFFFF);
@@ -185,6 +189,8 @@ void vmxRun(CPU *cpu) {
             uint32_t valor = ((uint32_t)instr.op2.datos.memoria.codReg << 16) |
                              ((uint32_t)offsetSigno & 0x0000FFFF);
             cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | (valor & 0x00FFFFFF);
+        } else if (instr.op2.tipo == TIPO_REGISTRO) {
+            cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | instr.op2.datos.registro.codReg;
         } else {
             int32_t valorConSigno = instr.op2.datos.valor;
             cpu->regs[REG_OP2] = (instr.op2.tipo << 24) | ((uint32_t)valorConSigno & 0x00FFFFFF);
@@ -194,6 +200,19 @@ void vmxRun(CPU *cpu) {
 
         if (tablaInstrucciones[instr.opcode] != NULL) {
             uint32_t resultado = tablaInstrucciones[instr.opcode](cpu, &instr);
+            
+            if (resultado == 3) {
+                pasoAPaso = 1;
+            } else if (pasoAPaso && cpu->vmiFile) {
+                pasoAPaso = 0;
+                uint32_t accion = sysBreakpoint(cpu);
+                if (accion == 2) {
+                    cpu->ejecutando = 0;
+                    break;
+                } else if (accion == 1) {
+                    pasoAPaso = 1;
+                }
+            }
         } else {
             terminarConError(VMX_ERROR_INVALID_INSTRUCTION, NULL);
         }

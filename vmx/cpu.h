@@ -109,6 +109,7 @@ typedef struct {
     Tsegmento segmentos[MAX_SEGMENTOS];
     uint16_t cantSegmentos;
     int ejecutando;
+    const char *vmiFile;
 } CPU;
 
 typedef struct {

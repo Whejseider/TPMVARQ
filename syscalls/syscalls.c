@@ -30,9 +30,16 @@ uint32_t ejecutarSyscall(CPU *cpu, uint32_t syscall) {
         case SYS_CLEAR_SCREEN:
             sysClearScreen();
             return 1;
-        case SYS_BREAKPOINT:
-            sysBreakpoint(cpu);
+        case SYS_BREAKPOINT: {
+            uint32_t accion = sysBreakpoint(cpu);
+            if (accion == 2) {
+                cpu->ejecutando = 0;
+                return 0;
+            } else if (accion == 1) {
+                return 3;
+            }
             return 1;
+        }
         default:
             fprintf(stderr, "Llamada al sistema no implementada: %u\n", syscall);
             return 0;
@@ -172,13 +179,34 @@ void sysClearScreen(void) {
 #endif
 }
 
-void sysBreakpoint(CPU *cpu) {
-    const char *nombreImagen = "snapshot.vmi";
-    if (guardarImagen(nombreImagen, cpu)) {
-        printf("[BREAKPOINT] Estado guardado en %s\n", nombreImagen);
-    } else {
-        fprintf(stderr, "[BREAKPOINT] Error al guardar %s\n", nombreImagen);
+uint32_t sysBreakpoint(CPU *cpu) {
+    if (!cpu->vmiFile) {
+        return 0;
     }
+
+    if (!guardarImagen(cpu->vmiFile, cpu)) {
+        fprintf(stderr, "[BREAKPOINT] Error al guardar %s\n", cpu->vmiFile);
+        return 0;
+    }
+
+    printf("\n[BREAKPOINT] Estado guardado en %s\n", cpu->vmiFile);
+    printf("Opciones: 'g' (go), 'q' (quit), Enter (paso a paso): ");
+    fflush(stdout);
+
+    char buffer[16];
+    if (!fgets(buffer, sizeof(buffer), stdin)) {
+        return 0;
+    }
+
+    if (buffer[0] == 'g' || buffer[0] == 'G') {
+        return 0;
+    } else if (buffer[0] == 'q' || buffer[0] == 'Q') {
+        return 2;
+    } else if (buffer[0] == '\n') {
+        return 1;
+    }
+
+    return 0;
 }
 
 /**

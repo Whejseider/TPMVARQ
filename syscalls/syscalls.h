@@ -81,11 +81,12 @@ void sysStringWrite(CPU *cpu);
 void sysClearScreen(void);
 
 /**
- * Genera un snapshot .vmi
+ * Genera un snapshot .vmi y espera acción del usuario
  * 
  * @param cpu estructura de la CPU
+ * @return 0 = continuar, 1 = paso a paso, 2 = quit
  */
-void sysBreakpoint(CPU *cpu);
+uint32_t sysBreakpoint(CPU *cpu);
 
 // ==== FUNCIONES AUXILIARES ====
 

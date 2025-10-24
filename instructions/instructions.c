@@ -214,9 +214,11 @@ uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
             return (uint32_t) op->datos.valor;
         case TIPO_MEMORIA: {
             uint8_t reg = op->datos.memoria.codReg;
-            int32_t desplazamiento = op->datos.memoria.offset;
+            int16_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
-            uint32_t dirLog = base + (uint32_t) (int32_t)desplazamiento;
+            uint16_t segmento = (base >> 16) & 0xFFFF;
+            int32_t offset = (int16_t)(base & 0xFFFF) + desplazamiento;
+            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offset & 0xFFFF);
             uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
             if (bytes == 1) {
                 return (uint32_t)(int8_t) leerMemoria8(cpu, dirLog);
@@ -262,9 +264,11 @@ void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
         }
         case TIPO_MEMORIA: {
             uint8_t reg = op->datos.memoria.codReg;
-            int32_t desplazamiento = op->datos.memoria.offset;
+            int16_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
-            uint32_t dirLog = base + (uint32_t) (int32_t)desplazamiento;
+            uint16_t segmento = (base >> 16) & 0xFFFF;
+            int32_t offset = (int16_t)(base & 0xFFFF) + desplazamiento;
+            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offset & 0xFFFF);
             uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
             if (bytes == 1) {
                 escribirMemoria8(cpu, dirLog, (uint8_t) (valor & 0xFFu));
