@@ -46,10 +46,6 @@ static uint16_t leerWordInstr(CPU *cpu, uint32_t direccionLogica) {
     return (uint16_t)((alto << 8) | bajo);
 }
 
-static int esRegistroSegmento(uint8_t reg) {
-    return reg == REG_CS || reg == REG_DS || reg == REG_ES || reg == REG_SS || reg == REG_KS || reg == REG_PS;
-}
-
 static uint32_t obtenerIndiceSegmentoPila(CPU *cpu) {
     if (cpu->regs[REG_SP] == 0xFFFFFFFF) {
         terminarConError(VMX_ERROR_STACK_UNDERFLOW, "stack no inicializada");
