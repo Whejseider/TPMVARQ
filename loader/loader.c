@@ -7,9 +7,6 @@
 #include "../dissasembler/dissasembler.h"
 #include "../utils/utils.h"
 
-#define MEM_DEF_KIB 16
-#define MEM_DEF_BYTES ((size_t)MEM_DEF_KIB * 1024)
-
 static int leerUint16BE(FILE *archivo, uint16_t *out) {
     uint8_t buffer[2];
     if (fread(buffer, 1, 2, archivo) != 2) {

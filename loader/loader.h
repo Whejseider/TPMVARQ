@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include "../vmx/cpu.h"
 
+// Constantes de memoria por defecto
+#define MEM_DEF_KIB 16
+#define MEM_DEF_BYTES ((size_t)MEM_DEF_KIB * 1024)
+
 typedef struct {
     char identificador[5];
     uint8_t version;
