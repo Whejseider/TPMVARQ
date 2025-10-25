@@ -13,8 +13,8 @@ add_executable(TPMVARQ
         instructions/instructions.h
         loader/loader.c
         loader/loader.h
-        dissasembler/dissasembler.c
-        dissasembler/dissasembler.h
+        disassembler/disassembler.c
+        disassembler/disassembler.h
         syscalls/syscalls.c
         syscalls/syscalls.h
         utils/utils.c
