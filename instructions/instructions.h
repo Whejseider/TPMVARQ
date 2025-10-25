@@ -1,98 +1,92 @@
+/**
+ * instructions.h - Implementaciones de todas las instrucciones
+ * 
+ * Contiene todas las 32 instrucciones del set de instrucciones:
+ * - Movimiento de datos (MOV, SWAP, LDL, LDH)
+ * - Aritméticas (ADD, SUB, MUL, DIV)
+ * - Lógicas (AND, OR, XOR, NOT)
+ * - Desplazamientos (SHL, SHR, SAR)
+ * - Control de flujo (JMP, JZ, JP, JN, JNZ, JNP, JNN)
+ * - Pila y subrutinas (PUSH, POP, CALL, RET)
+ * - Sistema (SYS, STOP)
+ * - Utilidades (CMP, RND)
+ */
+
 #pragma once
 
 #include "../vmx/cpu.h"
 
+// ==== FUNCIONES AUXILIARES ====
+
 /**
- * Lee la instrucción a ejecutar y carga los registros
- * REGISTRO OP1 y REGISTRO OP2 junto con sus valores
- * Y la dirección de memoria de la instrucción
- * @param cpu
- * @param direccion
- * @param instr
- * @return
+ * Lee y decodifica una instrucción desde memoria
+ * 
+ * Decodifica el opcode y los operandos, actualiza OP1 y OP2.
+ * 
+ * @param cpu estructura de la CPU
+ * @param direccion dirección lógica de la instrucción
+ * @param instr estructura donde almacenar la instrucción decodificada
+ * @return bytes leídos
  */
 uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr);
+
+/**
+ * Obtiene el valor de un operando (registro, memoria o inmediato)
+ */
 uint32_t obtenerValorOperando(CPU *cpu, Operando *op);
+
+/**
+ * Establece el valor de un operando (registro o memoria)
+ */
 void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor);
 
-// ==== INSTRUCCIONES CON 2 OPERANDOs ====
-/**
- * asigna a un registro o posición de memoria un valor, que puede ser el contenido de otro registro,
- * posición de memoria o un valor inmediato.
- * MOV EAX,EDX ;Carga en EAX el valor del registro EDX
- * MOV EBX,[8] ;Carga en EBX 4 bytes desde la celda de memoria 8 hasta la 11
- * MOV [12],10 ;Carga desde la celda de memoria 12 hasta la 15 el valor decimal 10
- * @param cpu
- * @param instr
- * @return
- */
+// ==== MOVIMIENTO DE DATOS ====
+
+/** MOV op1, op2 - Copia valor de op2 a op1 */
 uint32_t instr_mov(CPU *cpu, Instruccion *instr);
-/**
- * ADD, SUB, MUL, DIV: realizan las cuatro operaciones matemáticas básicas. El primer operando debe
- * ser de registro o memoria, ya que es donde se guarda el resultado. El resultado de estas instrucciones
- * afecta el valor del registro CC. El DIV tiene la particularidad de que además guarda el resto de la división
- * entera (módulo) en AC.
- * ADD EAX,2 ; incrementa EAX en 2
- * MUL EAX,[10] ; multiplica EAX por el valor de la celda 10, dejando el resultado en EAX
- * SUB [EBX+10],1 ; resta 1 al valor de la celda de 4 bytes apuntada por EBX+10
- * DIV ECX,7 ; divide el valor de ECX por 7, el resultado queda en ECX y el resto en AC
- * @param cpu
- * @param instr
- * @return
- */
+
+/** SWAP op1, op2 - Intercambia valores de op1 y op2 */
+uint32_t instr_swap(CPU *cpu, Instruccion *instr);
+
+/** LDL op1, op2 - Carga bits 0-15 de op1 con bits 0-15 de op2 */
+uint32_t instr_ldl(CPU *cpu, Instruccion *instr);
+
+/** LDH op1, op2 - Carga bits 16-31 de op1 con bits 0-15 de op2 */
+uint32_t instr_ldh(CPU *cpu, Instruccion *instr);
+
+/** RND op1, op2 - Genera número aleatorio entre 0 y op2, lo guarda en op1 */
+uint32_t instr_rnd(CPU *cpu, Instruccion *instr);
+
+// ==== OPERACIONES ARITMÉTICAS ====
+
+/** ADD op1, op2 - op1 = op1 + op2 (actualiza CC) */
 uint32_t instr_add(CPU *cpu, Instruccion *instr);
-/**
- * ADD, SUB, MUL, DIV: realizan las cuatro operaciones matemáticas básicas. El primer operando debe
- * ser de registro o memoria, ya que es donde se guarda el resultado. El resultado de estas instrucciones
- * afecta el valor del registro CC. El DIV tiene la particularidad de que además guarda el resto de la división
- * entera (módulo) en AC.
- * ADD EAX,2 ; incrementa EAX en 2
- * MUL EAX,[10] ; multiplica EAX por el valor de la celda 10, dejando el resultado en EAX
- * SUB [EBX+10],1 ; resta 1 al valor de la celda de 4 bytes apuntada por EBX+10
- * DIV ECX,7 ; divide el valor de ECX por 7, el resultado queda en ECX y el resto en AC
- * @param cpu
- * @param instr
- * @return
- */
+
+/** SUB op1, op2 - op1 = op1 - op2 (actualiza CC) */
 uint32_t instr_sub(CPU *cpu, Instruccion *instr);
-/**
- * ADD, SUB, MUL, DIV: realizan las cuatro operaciones matemáticas básicas. El primer operando debe
- * ser de registro o memoria, ya que es donde se guarda el resultado. El resultado de estas instrucciones
- * afecta el valor del registro CC. El DIV tiene la particularidad de que además guarda el resto de la división
- * entera (módulo) en AC.
- * ADD EAX,2 ; incrementa EAX en 2
- * MUL EAX,[10] ; multiplica EAX por el valor de la celda 10, dejando el resultado en EAX
- * SUB [EBX+10],1 ; resta 1 al valor de la celda de 4 bytes apuntada por EBX+10
- * DIV ECX,7 ; divide el valor de ECX por 7, el resultado queda en ECX y el resto en AC
- * @param cpu
- * @param instr
- * @return
- */
+
+/** MUL op1, op2 - op1 = op1 * op2 (actualiza CC) */
 uint32_t instr_mul(CPU *cpu, Instruccion *instr);
-/**
- * ADD, SUB, MUL, DIV: realizan las cuatro operaciones matemáticas básicas. El primer operando debe
- * ser de registro o memoria, ya que es donde se guarda el resultado. El resultado de estas instrucciones
- * afecta el valor del registro CC. El DIV tiene la particularidad de que además guarda el resto de la división
- * entera (módulo) en AC.
- * ADD EAX,2 ; incrementa EAX en 2
- * MUL EAX,[10] ; multiplica EAX por el valor de la celda 10, dejando el resultado en EAX
- * SUB [EBX+10],1 ; resta 1 al valor de la celda de 4 bytes apuntada por EBX+10
- * DIV ECX,7 ; divide el valor de ECX por 7, el resultado queda en ECX y el resto en AC
- * @param cpu
- * @param instr
- * @return
- */
+
+/** DIV op1, op2 - op1 = op1 / op2, resto en RES9 (actualiza CC) */
 uint32_t instr_div(CPU *cpu, Instruccion *instr);
-/**
- * similar a la instrucción SUB, el segundo operando se resta del primero, pero éste no almacena el
- * resultado, solamente se modifican los bits N y Z del registro CC. Es útil para comparar dos valores y
- * generalmente se utiliza antes de una instrucción de salto condicional.
- * CMP EAX,[1000] ; compara los contenidos de EAX y la celda 1000
- * @param cpu
- * @param instr
- * @return
- */
+
+/** CMP op1, op2 - Compara op1 - op2, actualiza CC (no guarda resultado) */
 uint32_t instr_cmp(CPU *cpu, Instruccion *instr);
+
+// ==== OPERACIONES LÓGICAS Y DESPLAZAMIENTOS ====
+
+/** NOT op1 - op1 = ~op1 (inversión bit a bit, actualiza CC) */
+uint32_t instr_not(CPU *cpu, Instruccion *instr);
+
+/** AND op1, op2 - op1 = op1 & op2 (actualiza CC) */
+uint32_t instr_and(CPU *cpu, Instruccion *instr);
+
+/** OR op1, op2 - op1 = op1 | op2 (actualiza CC) */
+uint32_t instr_or(CPU *cpu, Instruccion *instr);
+
+/** XOR op1, op2 - op1 = op1 ^ op2 (actualiza CC) */
+uint32_t instr_xor(CPU *cpu, Instruccion *instr);
 /**
  * SHL, SHR, SAR: realizan desplazamientos de los bits almacenados en un registro o una posición de
  * memoria y afectan al registro CC. SHL y SHR efectuan corrimientos a la izquierda y a la derecha
@@ -362,14 +356,49 @@ uint32_t instr_sys(CPU *cpu, Instruccion *instr);
 
 // ==== INSTRUCIONES SIN OPERANDO ====
 
-/**
- * detiene la ejecución del programa
- * @param cpu
- * @param instr
- * @return
- */
+/** STOP - Detiene la ejecución del programa */
 uint32_t instr_stop(CPU *cpu, Instruccion *instr);
+
+// ==== PILA Y SUBRUTINAS ====
+
+/**
+ * PUSH op1 - Empuja op1 a la pila
+ * 
+ * Operación:
+ * 1. SP = SP - 4
+ * 2. [SS:SP] = op1
+ * 
+ * La pila crece hacia direcciones menores.
+ */
 uint32_t instr_push(CPU *cpu, Instruccion *instr);
+
+/**
+ * POP op1 - Saca valor de la pila y lo guarda en op1
+ * 
+ * Operación:
+ * 1. op1 = [SS:SP]
+ * 2. SP = SP + 4
+ */
 uint32_t instr_pop(CPU *cpu, Instruccion *instr);
+
+/**
+ * CALL op1 - Llama a subrutina en dirección op1
+ * 
+ * Operación:
+ * 1. Empuja dirección de retorno (IP actual) a la pila
+ * 2. IP = [CS:op1]
+ * 
+ * Permite retornar con RET.
+ */
 uint32_t instr_call(CPU *cpu, Instruccion *instr);
+
+/**
+ * RET - Retorna de subrutina
+ * 
+ * Operación:
+ * 1. IP = [SS:SP] (saca dirección de retorno de la pila)
+ * 2. SP = SP + 4
+ * 
+ * Si la dirección de retorno es 0xFFFFFFFF, detiene el programa.
+ */
 uint32_t instr_ret(CPU *cpu, Instruccion *instr);
