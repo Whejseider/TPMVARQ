@@ -75,13 +75,14 @@ int validarIdentificadorVMX(const char *identificador) {
 }
 
 int validarVersionVMX(uint8_t version) {
-    return version == 1;
+    // Soporta versión 1 (MV1) y versión 2 (MV2)
+    return version == 1 || version == 2;
 }
 
 // ==== FUNCIONES DE CONVERSIÓN ====
 
 void hexToString(uint32_t valor, char *buffer, size_t tamano) {
-    if (!buffer || tamano < 9) { // Mínimo para "0x12345678"
+    if (!buffer || tamano < 9) {
         return;
     }
     
@@ -89,7 +90,7 @@ void hexToString(uint32_t valor, char *buffer, size_t tamano) {
 }
 
 void decimalToString(int32_t valor, char *buffer, size_t tamano) {
-    if (!buffer || tamano < 12) { // Mínimo para "-2147483648"
+    if (!buffer || tamano < 12) {
         return;
     }
     
