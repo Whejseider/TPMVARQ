@@ -1,110 +1,100 @@
-# Trabajo práctico - Máquina Virtual
+# Trabajo Práctico - Máquina Virtual (MV1 & MV2) 💻
 
-La aplicación de la máquina virtual, está realizada en el lenguaje de programación **C11** utilizando el ide de JetBrains CLion.
+Emulador de máquina virtual desarrollado en **C11** para la materia Arquitectura de Computadoras de la Facultad de Ingeniería, UNMDP. Esta versión implementa las especificaciones de la Máquina Virtual Parte I (MV1) y Parte II (MV2).
 
-Está compilada y/o desarrollada para el sistema operativo de **Windows 11 x64**.
+---
 
-Dentro de la carpeta traductor se encuentran algunos ejemplos de programas en código máquina (.vmx).
+## ✨ Características Principales
 
+* **Emulación Completa:** Ejecuta programas compilados en formato `.vmx` (versiones 1 y 2).
+* **Gestión de Memoria:**
+    * Memoria principal de tamaño variable (configurable al ejecutar).
+    * Soporte para hasta 6 segmentos: **Param, Const, Code, Data, Extra, Stack**.
+* **Arquitectura de Registros:** Emula 32 registros de 32 bits, incluyendo registros de propósito general, punteros de segmento (CS, DS, ES, SS, KS, PS), pila (SP, BP) y control.
+* **Set de Instrucciones Ampliado (MV2):**
+    * Instrucciones de manejo de pila: `PUSH`, `POP`, `CALL`, `RET`.
+    * Modificadores de tamaño para operandos de memoria (`b`, `w`, `l`).
+    * Acceso a sectores de registros de propósito general (ej. `AX`, `AL`, `AH`).
+* **Llamadas al Sistema (Syscalls):** Incluye operaciones de I/O (`READ`, `WRITE`), manejo de strings (`STRING_READ`, `STRING_WRITE`), limpieza de pantalla (`CLEAR_SCREEN`) y debugging (`BREAKPOINT`).
+* **Persistencia y Debugging:**
+    * Capacidad de guardar y cargar el estado completo de la VM en archivos de imagen (`.vmi`).
+    * Funcionalidad de `BREAKPOINT` para pausar, guardar estado y continuar (`go`, `quit`, `step-by-step`).
+* **Manejo de Parámetros:** Soporte para pasar parámetros a los programas ejecutados a través del segmento `Param` (estilo `argc`/`argv`).
+* **Disassembler:** Opción para visualizar el código Assembler correspondiente al `.vmx` cargado, incluyendo constantes string y punto de entrada.
 
-## Requerimientos previos
+---
 
-- **CMAKE** (Versión mínima 4.0)
-- **C Compiler**: GCC (Versión mínima 8.1.0)
-- **Sistema Operativo**: Windows 11 x64
-- **C Debugger**: GDB (Versión mínima 8.1.0)
-## Instalación
+## 🔧 Requerimientos Previos
 
+* **Sistema Operativo:** Windows 11 x64
+* **Compilador C:** GCC (versión mínima 8.1.0)
+* **Build System:** CMAKE (versión mínima 4.0)
+* **(Opcional) Debugger C:** GDB (versión mínima 8.1.0)
 
-1. Clonar el repositorio
+---
 
-```bash
-  git clone https://github.com/Whejseider/TPMVARQ.git
-  cd TPMVARQ
-```
+## 🛠️ Compilación
 
-2. Compilar
-```bash
-  mkdir build
-  cd build
-  cmake .. -G "MinGW Makefiles"
-  cmake --build .
-```
+1.  Clonar el repositorio (si aplica).
+2.  Crear y navegar a un directorio `build`:
+    ```bash
+    mkdir build
+    cd build
+    ```
+3.  Configurar el proyecto con CMake usando MinGW Makefiles:
+    ```bash
+    cmake .. -G "MinGW Makefiles"
+    ```
+4.  Compilar el proyecto:
+    ```bash
+    cmake --build .
+    ```
+    O directamente con `mingw32-make`.
 
-## Ejecución
+---
 
-El programa se ejecuta con 2 parámetros, de los cuáles uno es opcional **[-d]**.
+## ▶️ Ejecución
 
-1. Ejecutar la terminal (CMD o Powershell)
-2. Escribir la ruta del ejecutable **TPMVARQ.exe** encontrada en la carpeta build. Dejando un espacio, la ruta del archivo **.vmx** y con otros espacio de forma opcional el parámetro sin corchetes **[-d]**
-
-Ejemplos:
-```bash
-C:\Users\xxxx\TPMVARQ\cmake-build-debug> .\TPMVARQ.exe .\sample.vmx -d
-```
-
-```bash
-C:\Users\xxxx\xx> "Ruta al TPMVARQ.exe" "Ruta al archivo .vmx" -d
-```
-## Ejemplos
-
-El programa **sample.vmx** muestra el factorial del número 3.
-
-```bash
-3! = 3.2.1 = 6
-```
-
-1. Ejecución con DISASSEMBLER [-d]
-```bash
-C:\Users\xxxx\TPMVARQ\cmake-build-debug> .\TPMVARQ.exe .\sample.vmx -d
-```
-
-SALIDA
+La máquina virtual se ejecuta desde la consola (`CMD` o `Powershell`) con la siguiente sintaxis general:
 
 ```bash
-=== INFORMACIÓN DEL PROGRAMA ===
-Identificador: 'VMX25'
-Versión: 1
-Bytes tamaño del código (hex): 00 2D
-Tamaño del código: 45
-
-=== DISASSEMBLER ===
-[0000] 50 1B 0D          | MOV EDX, DS
-[0003] B0 00 01 0D 00 04 | MOV [EDX+4], 1
-[0009] 90 00 03 0C       | MOV ECX, 3
-[000D] 73 0C 0D 00 04    | MUL [EDX+4], ECX
-[0012] 91 FF FF 0C       | ADD ECX, -1
-[0016] 85 00 0D          | JNZ 13
-[0019] 90 00 01 0A       | MOV EAX, 1
-[001D] 9E 00 04 0C       | LDH ECX, 4
-[0021] 9D 00 01 0C       | LDL ECX, 1
-[0025] 91 00 04 0D       | ADD EDX, 4
-[0029] 80 00 02          | SYS 2
-[002C] 0F                | STOP
-
-=== EJECUCIÓN ===
-Ejecutando programa...
-
-[0031]:  6
-
-Programa terminado.
+.\TPMVARQ.exe [archivo.vmx] [archivo.vmi] [m=M] [-d] [-p param1 param2 ... paramN]
 ```
 
-Donde se puede apreciar la información de cabecera del programa en el inicio, en el medio se muestra el DISASSEMBLER, y al final el resultado de la ejecución del programa.
+**Parámetros:**
 
-2. Ahora ejecutando sin el parámetro opcional **[-d]
-```bash
-=== INFORMACIÓN DEL PROGRAMA ===
-Identificador: 'VMX25'
-Versión: 1
-Bytes tamaño del código (hex): 00 2D
-Tamaño del código: 45
+* `archivo.vmx` (Opcional si se usa `.vmi`): Ruta al programa compilado a ejecutar.
+* `archivo.vmi` (Opcional): Ruta al archivo de imagen para guardar estado (con `BREAKPOINT`) o para cargar un estado previo y continuar la ejecución.
+* `m=M` (Opcional): Especifica el tamaño de la memoria principal en KiB. (Ej: `m=32` para 32 KiB). Si se omite, el valor por defecto es 16 KiB.
+* `-d` (Opcional): Muestra el desensamblador del código cargado antes de la ejecución.
+* `-p param1 param2 ...` (Opcional): Indica que los siguientes argumentos son parámetros para el programa. Deben ir al final del comando. Si no se especifica un `.vmx`, estos parámetros se ignoran.
 
-Ejecutando programa...
+**Modos de Ejecución:**
 
-[0031]:  6
+1.  **Ejecutar un programa nuevo:**
+    ```bash
+    .\TPMVARQ.exe programa.vmx
+    ```
+2.  **Ejecutar mostrando disassembler:**
+    ```bash
+    .\TPMVARQ.exe programa.vmx -d
+    ```
+3.  **Ejecutar con memoria específica y parámetros:**
+    ```bash
+    .\TPMVARQ.exe programa.vmx m=64 -p arg1 "argumento 2" 123
+    ```
+4.  **Ejecutar y habilitar breakpoints (guardando en `estado.vmi`):**
+    ```bash
+    .\TPMVARQ.exe programa.vmx estado.vmi
+    ```
+5.  **Continuar ejecución desde una imagen guardada:**
+    ```bash
+    .\TPMVARQ.exe estado.vmi
+    ```
 
-Programa terminado.
-```
+---
 
-Al no incluir el parámetro, no se muestra el DISASSEMBLER
+## 📄 Información para la Entrega
+
+* **Sistema Operativo:** Desarrollado y compilado para **Windows 11 x64**.
+* **Enlace al Commit:** [Click aquí](https://github.com/Whejseider/TPMVARQ/commit/d35976a49144ec10c7c440ad0ce532867627a9be)
