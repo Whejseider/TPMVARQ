@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "dissasembler.h"
+#include "disassembler.h"
 #include "../instructions/instructions.h"
 #include "../memory/memory.h"
 
