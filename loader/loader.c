@@ -94,7 +94,7 @@ int cargarPrograma(const char *nombreArchivo, CPU *cpu, int mostrarDisasm, char 
 
     // === 6. MOSTRAR INFORMACIÓN DEL ARCHIVO ===
     // Mostrar información básica del archivo cargado
-    printf("\n=== INFORMACIÓN DEL PROGRAMA ===");
+    printf("\n=== INFORMACIÓN DEL PROGRAMA ===\n");
     printf("Identificador: '%.5s'\n", identificador);
     printf("Versión: %d\n", version);
     printf("Bytes tamaño del código (hex): %02X %02X\n", tamanoBytes[0], tamanoBytes[1]);
