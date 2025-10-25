@@ -51,13 +51,6 @@ static char prefijoMemoria(uint8_t codigoTam) {
     return 'l';
 }
 
-static uint8_t bytesMemoria(uint8_t codigoTam) {
-    uint8_t tam = codigoTam & 0x03;
-    if (tam == 0x03) return 1;
-    if (tam == 0x02) return 2;
-    return 4;
-}
-
 static void imprimirCadenaConstante(CPU *cpu, uint16_t base, uint16_t offset, uint16_t longitud) {
     size_t bytesTotal = longitud;
     if (base + offset + longitud < base + cpu->segmentos[0].tamano && cpu->mem[base + offset + longitud] == '\0') {
