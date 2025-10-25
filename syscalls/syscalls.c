@@ -10,9 +10,7 @@
 #include <windows.h>
 #endif
 
-/**
- * Ejecuta una llamada al sistema según el número especificado
- */
+// Implementación del dispatcher de syscalls
 uint32_t ejecutarSyscall(CPU *cpu, uint32_t syscall) {
     switch (syscall) {
         case SYS_READ:
@@ -35,7 +33,8 @@ uint32_t ejecutarSyscall(CPU *cpu, uint32_t syscall) {
             if (accion == 2) {
                 cpu->ejecutando = 0;
                 return 0;
-            } else if (accion == 1) {
+            }
+            if (accion == 1) {
                 return 3;
             }
             return 1;
@@ -46,14 +45,7 @@ uint32_t ejecutarSyscall(CPU *cpu, uint32_t syscall) {
     }
 }
 
-/**
- * Lee datos del teclado y los almacena en memoria
- * 
- * Registros utilizados:
- * - EAX: modo de entrada (decimal, hex, octal, binario, char)
- * - EDX: dirección de memoria donde almacenar
- * - ECX: cantidad (bits bajos) y tamaño (bits altos)
- */
+// Implementación de SYS 0x01: READ
 void sysRead(CPU *cpu) {
     uint32_t modo = cpu->regs[REG_EAX];
     uint32_t direccion = cpu->regs[REG_EDX];
@@ -77,14 +69,7 @@ void sysRead(CPU *cpu) {
     }
 }
 
-/**
- * Muestra datos de memoria en pantalla
- * 
- * Registros utilizados:
- * - EAX: modo de salida (decimal, hex, octal, binario, char)
- * - EDX: dirección de memoria a mostrar
- * - ECX: cantidad (bits bajos) y tamaño (bits altos)
- */
+// Implementación de SYS 0x02: WRITE
 void sysWrite(CPU *cpu) {
     uint32_t modo = cpu->regs[REG_EAX];
     uint32_t direccion = cpu->regs[REG_EDX];
@@ -112,35 +97,46 @@ void sysWrite(CPU *cpu) {
     }
 }
 
+// Implementación de SYS 0x03: STRING READ (MV2)
 void sysStringRead(CPU *cpu) {
-    uint32_t destino = cpu->regs[REG_EDX];
-    uint32_t maxLongitud = cpu->regs[REG_ECX];
+    // Obtener parámetros de registros
+    uint32_t destino = cpu->regs[REG_EDX];        // Dónde guardar
+    uint32_t maxLongitud = cpu->regs[REG_ECX];   // Límite de lectura
+    
+    // Validar/ajustar límite
     if (maxLongitud == 0 || maxLongitud > 65535) {
-        maxLongitud = 65535;
+        maxLongitud = 65535;  // Límite por defecto
     }
 
+    // Alocar buffer temporal para la lectura
     char *buffer = (char *) malloc(maxLongitud + 1);
     if (!buffer) {
         fprintf(stderr, "No se pudo alocar memoria para string read\n");
         return;
     }
 
+    // Mostrar prompt y leer desde stdin
     printf("> ");
     if (!fgets(buffer, (int) maxLongitud + 1, stdin)) {
-        buffer[0] = '\0';
+        buffer[0] = '\0';  // Error de lectura, string vacío
     }
 
+    // Remover salto de línea si existe
     size_t len = strcspn(buffer, "\n");
     buffer[len] = '\0';
 
+    // Copiar string a memoria byte por byte (incluyendo '\0' final)
     for (size_t i = 0; i <= len; ++i) {
         escribirMemoria8(cpu, destino + (uint32_t)i, (uint8_t) buffer[i]);
     }
 
+    // Liberar buffer temporal
     free(buffer);
+
     cpu->regs[REG_AC] = (uint32_t) len;
 }
 
+// Implementación de SYS 0x04: STRING WRITE
 void sysStringWrite(CPU *cpu) {
     uint32_t origen = cpu->regs[REG_EDX];
     uint32_t maxLongitud = cpu->regs[REG_ECX];
@@ -148,70 +144,99 @@ void sysStringWrite(CPU *cpu) {
         maxLongitud = 65535;
     }
 
+    // Leer e imprimir caracteres hasta '\0' o límite
     for (uint32_t i = 0; i < maxLongitud; ++i) {
         uint8_t c = leerMemoria8(cpu, origen + i);
+        
+        // Terminar al encontrar \0
         if (c == '\0') {
             break;
         }
+        
+        // Imprimir carácter
         putchar((int) c);
     }
+    
+    // Forzar salida inmediata
     fflush(stdout);
 }
 
+// Implementación de SYS 0x07: CLEAR SCREEN (MV2)
 void sysClearScreen(void) {
 #ifdef _WIN32
+    // === LIMPIEZA EN WINDOWS ===
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     DWORD count;
     DWORD cellCount;
-    COORD homeCoords = {0, 0};
+    COORD homeCoords = {0, 0};  // Posición (0,0) = esquina superior izquierda
 
+    // Validar handle de consola
     if (hConsole == INVALID_HANDLE_VALUE) return;
 
+    // Obtener información del buffer de consola
     if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) return;
+    
+    // Calcular cantidad total de celdas de caracteres
     cellCount = csbi.dwSize.X * csbi.dwSize.Y;
 
+    // Llenar toda la consola con espacios
     FillConsoleOutputCharacter(hConsole, (TCHAR) ' ', cellCount, homeCoords, &count);
+    
+    // Restaurar atributos de color
     FillConsoleOutputAttribute(hConsole, csbi.wAttributes, cellCount, homeCoords, &count);
+    
+    // Mover cursor a la esquina superior izquierda
     SetConsoleCursorPosition(hConsole, homeCoords);
 #else
+    // === LIMPIEZA EN UNIX/LINUX ===
+    // \033[2J = limpiar pantalla completa
+    // \033[H  = mover cursor a home (0,0)
     printf("\033[2J\033[H");
 #endif
 }
 
+// Implementación de SYS 0x0F: BREAKPOINT (MV2)
 uint32_t sysBreakpoint(CPU *cpu) {
+    // Verificar que se especificó archivo .vmi
     if (!cpu->vmiFile) {
         return 0;
     }
 
+    // Guardar estado actual en archivo .vmi
     if (!guardarImagen(cpu->vmiFile, cpu)) {
         fprintf(stderr, "[BREAKPOINT] Error al guardar %s\n", cpu->vmiFile);
         return 0;
     }
 
+    // Mostrar mensaje y opciones
     printf("\n[BREAKPOINT] Estado guardado en %s\n", cpu->vmiFile);
     printf("Opciones: 'g' (go), 'q' (quit), Enter (paso a paso): ");
     fflush(stdout);
 
+    // Leer respuesta del usuario
     char buffer[16];
     if (!fgets(buffer, sizeof(buffer), stdin)) {
-        return 0;
+        return 0;  // Error de lectura, continuar
     }
 
+    // Procesar respuesta
     if (buffer[0] == 'g' || buffer[0] == 'G') {
+        // GO: Continuar ejecución normal
         return 0;
     } else if (buffer[0] == 'q' || buffer[0] == 'Q') {
+        // QUIT: Abortar ejecución
         return 2;
     } else if (buffer[0] == '\n') {
+        // ENTER: Activar modo paso a paso
         return 1;
     }
 
+    // Cualquier otra entrada: continuar normal
     return 0;
 }
 
-/**
- * Lee un valor según el modo especificado
- */
+// Función auxiliar: lee valor desde teclado según modo
 int32_t leerValorPorModo(uint32_t modo) {
     int32_t valor = 0;
 
@@ -239,9 +264,7 @@ int32_t leerValorPorModo(uint32_t modo) {
     return valor;
 }
 
-/**
- * Muestra un valor según el modo especificado
- */
+// Función auxiliar: muestra valor en uno o más formatos
 void mostrarValorPorModo(int32_t valor, uint32_t modo, uint16_t tamano) {
     if (modo & MODE_BINARY) {
         if (modo & 0x0F) printf(" ");
