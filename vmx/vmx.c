@@ -127,26 +127,23 @@ void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint
     if (indicesSegmento[SEG_SS] == (uint16_t)-1) {
         cpu->regs[REG_SP] = 0xFFFFFFFF;
     } else {
-        // SP apunta al tope del Stack Segment (la pila crece hacia abajo)
-        uint16_t baseSS = cpu->segmentos[indicesSegmento[SEG_SS]].base;
         uint16_t tamSS = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
-        cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | (baseSS + tamSS);
+        cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | tamSS;
     }
 
     cpu->ejecutando = 1;
 
     if (indicesSegmento[SEG_SS] != (uint16_t)-1) {
-        uint16_t baseSS = cpu->segmentos[indicesSegmento[SEG_SS]].base;
-        uint32_t tope = baseSS + cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
+        uint32_t tope = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
 
         // Empujar dirección de retorno (0xFFFFFFFF = fin de programa)
         tope -= 4;
         escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, 0xFFFFFFFF);
-        
+
         // Empujar argc (cantidad de parámetros)
         tope -= 4;
         escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argc);
-        
+
         // Empujar argv (puntero al array de parámetros en PS)
         tope -= 4;
         escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argvPtr);
@@ -168,16 +165,26 @@ void vmxRun(CPU *cpu) {
 
     // === FETCH-DECODE-EXECUTE LOOP ===
     while (cpu->ejecutando) {
-        // === FETCH: Verificar que IP está en CS ===
+        // === FETCH: Verificar que IP está en el segmento CS correcto ===
         uint16_t segmentoIp = (cpu->regs[REG_IP] >> 16) & 0xFFFF;
-        if (segmentoIp != 0) {
+        uint16_t segmentoCs = (cpu->regs[REG_CS] >> 16) & 0xFFFF;
+
+        // Si CS no está inicializado correctamente -> error
+        if (segmentoCs >= cpu->cantSegmentos) {
+            mostrarError("Segmento CS inválido.");
+            break;
+        }
+
+        // IP debe apuntar al mismo selector que CS
+        if (segmentoIp != segmentoCs) {
             mostrarError("IP fuera del segmento de código.");
             break;
         }
 
-        // Verificar que offset no excede el tamaño de CS
+        // Verificar que offset no excede el tamaño del segmento CS
         uint16_t offsetIp = cpu->regs[REG_IP] & 0xFFFF;
-        if (offsetIp >= cpu->segmentos[0].tamano) {
+        uint16_t tamanoCS = cpu->segmentos[segmentoCs].tamano;
+        if (offsetIp >= tamanoCS) {
             cpu->ejecutando = 0;
             break;
         }
