@@ -114,15 +114,18 @@ void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint
 
     // Configurar registros de segmento (bits altos = índice, bits bajos = offset)
     // 0xFFFFFFFF indica segmento no existente
-    cpu->regs[REG_PS] = (indicesSegmento[SEG_PS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_PS] << 16);
-    cpu->regs[REG_KS] = (indicesSegmento[SEG_KS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_KS] << 16);
-    cpu->regs[REG_CS] = (indicesSegmento[SEG_CS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_CS] << 16) | layout->entryPoint;
-    cpu->regs[REG_DS] = (indicesSegmento[SEG_DS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_DS] << 16);
-    cpu->regs[REG_ES] = (indicesSegmento[SEG_ES] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_ES] << 16);
-    cpu->regs[REG_SS] = (indicesSegmento[SEG_SS] == (uint16_t)-1) ? 0xFFFFFFFF : (indicesSegmento[SEG_SS] << 16);
+    cpu->regs[REG_PS] = (indicesSegmento[SEG_PS] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_PS] << 16);
+    cpu->regs[REG_KS] = (indicesSegmento[SEG_KS] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_KS] << 16);
+    cpu->regs[REG_CS] = (indicesSegmento[SEG_CS] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_CS] << 16) | layout->entryPoint;
+    cpu->regs[REG_DS] = (indicesSegmento[SEG_DS] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_DS] << 16);
+    cpu->regs[REG_ES] = (indicesSegmento[SEG_ES] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_ES] << 16);
+    cpu->regs[REG_SS] = (indicesSegmento[SEG_SS] == (uint16_t)-1) ? 0xFFFFFFFF : ((uint32_t)indicesSegmento[SEG_SS] << 16);
 
     // IP apunta al entry point en CS
     cpu->regs[REG_IP] = cpu->regs[REG_CS];
+
+    // BP inicializa en 0 (se configurará en el prólogo de la función)
+    cpu->regs[REG_BP] = 0;
 
     if (indicesSegmento[SEG_SS] == (uint16_t)-1) {
         cpu->regs[REG_SP] = 0xFFFFFFFF;
@@ -134,19 +137,25 @@ void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint
     cpu->ejecutando = 1;
 
     if (indicesSegmento[SEG_SS] != (uint16_t)-1) {
-        uint32_t tope = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
+        uint16_t tope = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
 
-        // Empujar dirección de retorno (0xFFFFFFFF = fin de programa)
+        // ORDEN CORRECTO: empujar en orden INVERSO para que queden accesibles con offsets positivos desde BP
+        // Después del prólogo (PUSH BP; MOV BP,SP), los parámetros quedan en:
+        // BP+4: primer parámetro empujado (argv)
+        // BP+8: segundo parámetro (argc)
+        // BP+12: tercer parámetro (ret_addr)
+        
+        // Empujar argv PRIMERO (puntero al array de parámetros en PS)
         tope -= 4;
-        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, 0xFFFFFFFF);
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argvPtr);
 
         // Empujar argc (cantidad de parámetros)
         tope -= 4;
-        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argc);
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, (uint32_t)argc);
 
-        // Empujar argv (puntero al array de parámetros en PS)
+        // Empujar dirección de retorno ÚLTIMO (0xFFFFFFFF = fin de programa)
         tope -= 4;
-        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, argvPtr);
+        escribirMemoria32(cpu, ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope, 0xFFFFFFFF);
 
         cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | tope;
     }
@@ -177,7 +186,8 @@ void vmxRun(CPU *cpu) {
 
         // IP debe apuntar al mismo selector que CS
         if (segmentoIp != segmentoCs) {
-            mostrarError("IP fuera del segmento de código.");
+            // IP fuera de CS indica terminación del programa
+            // No mostrar error - es el comportamiento esperado
             break;
         }
 

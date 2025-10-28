@@ -8,7 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/dissasembler/dissasembler.c" "CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj.d"
+  "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/disassembler/disassembler.c" "CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj.d"
+  "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/image/image.c" "CMakeFiles/TPMVARQ.dir/image/image.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/image/image.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/instructions/instructions.c" "CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/loader/loader.c" "CMakeFiles/TPMVARQ.dir/loader/loader.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/loader/loader.c.obj.d"
   "C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/main.c" "CMakeFiles/TPMVARQ.dir/main.c.obj" "gcc" "CMakeFiles/TPMVARQ.dir/main.c.obj.d"

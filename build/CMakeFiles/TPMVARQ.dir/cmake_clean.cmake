@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj"
-  "CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj.d"
+  "CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj"
+  "CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj.d"
+  "CMakeFiles/TPMVARQ.dir/image/image.c.obj"
+  "CMakeFiles/TPMVARQ.dir/image/image.c.obj.d"
   "CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj"
   "CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj.d"
   "CMakeFiles/TPMVARQ.dir/loader/loader.c.obj"

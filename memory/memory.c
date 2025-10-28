@@ -12,14 +12,26 @@ uint32_t traducirDireccion(CPU *cpu, uint32_t direccionLogica, uint32_t tamano) 
         terminarConError(VMX_ERROR_SEGMENT_FAULT, "segmento inválido");
     }
 
+    // Obtener información del segmento
+    uint16_t tamanoSegmento = cpu->segmentos[segmento].tamano;
+    
+    // Verificar que el segmento no esté vacío
+    if (tamanoSegmento == 0) {
+        terminarConError(VMX_ERROR_SEGMENT_FAULT, "segmento vacío");
+    }
+
+    // Verificar que el offset inicial esté dentro del segmento
+    if (offset >= tamanoSegmento) {
+        terminarConError(VMX_ERROR_MEMORY_ACCESS, "offset fuera de límites");
+    }
+
     // Calcular rango del acceso a memoria
-    uint32_t inicioAcceso = offset;
-    uint32_t finAcceso = inicioAcceso + tamano - 1;  // Último byte accedido
-    uint32_t tamanoSegmento = cpu->segmentos[segmento].tamano;
+    uint32_t finAcceso = (uint32_t)offset + tamano;
 
     // Verificar que el acceso completo esté dentro de los límites del segmento
-    if (finAcceso >= tamanoSegmento) {
-        terminarConError(VMX_ERROR_MEMORY_ACCESS, "acceso fuera de límites");
+    // Nota: finAcceso es el byte DESPUÉS del último byte accedido
+    if (finAcceso > tamanoSegmento) {
+        terminarConError(VMX_ERROR_MEMORY_ACCESS, "acceso fuera de límites del segmento");
     }
 
     // Calcular dirección física: base del segmento + offset

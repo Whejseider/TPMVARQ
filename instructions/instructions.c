@@ -213,8 +213,17 @@ uint32_t obtenerValorOperando(CPU *cpu, Operando *op) {
             int16_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
             uint16_t segmento = (base >> 16) & 0xFFFF;
-            int32_t offset = (int16_t)(base & 0xFFFF) + desplazamiento;
-            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offset & 0xFFFF);
+            uint16_t offset = (uint16_t)(base & 0xFFFF);
+            
+            // Aplicar desplazamiento con signo
+            int32_t offsetFinal = (int32_t)offset + (int32_t)desplazamiento;
+            
+            // Verificar que no sea negativo
+            if (offsetFinal < 0) {
+                terminarConError(VMX_ERROR_MEMORY_ACCESS, "offset negativo");
+            }
+            
+            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offsetFinal & 0xFFFF);
             uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
             if (bytes == 1) {
                 return (uint32_t)(int8_t) leerMemoria8(cpu, dirLog);
@@ -263,8 +272,17 @@ void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
             int16_t desplazamiento = op->datos.memoria.offset;
             uint32_t base = (reg == 0) ? cpu->regs[REG_DS] : cpu->regs[reg];
             uint16_t segmento = (base >> 16) & 0xFFFF;
-            int32_t offset = (int16_t)(base & 0xFFFF) + desplazamiento;
-            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offset & 0xFFFF);
+            uint16_t offset = (uint16_t)(base & 0xFFFF);
+            
+            // Aplicar desplazamiento con signo
+            int32_t offsetFinal = (int32_t)offset + (int32_t)desplazamiento;
+            
+            // Verificar que no sea negativo
+            if (offsetFinal < 0) {
+                terminarConError(VMX_ERROR_MEMORY_ACCESS, "offset negativo");
+            }
+            
+            uint32_t dirLog = ((uint32_t)segmento << 16) | ((uint32_t)offsetFinal & 0xFFFF);
             uint8_t bytes = bytesDesdeCodigo(op->datos.memoria.tam);
             if (bytes == 1) {
                 escribirMemoria8(cpu, dirLog, (uint8_t) (valor & 0xFFu));
@@ -440,19 +458,32 @@ uint32_t instr_rnd(CPU *cpu, Instruccion *instr) {
     return 1;
 }
 
+// Helper para saltos: si el operando es inmediato, mantener segmento actual de IP
+static void saltarADireccion(CPU *cpu, Operando *op, uint32_t direccion) {
+    if (op->tipo == TIPO_INMEDIATO) {
+        // Mantener segmento de IP, cambiar solo offset
+        uint16_t segmentoActual = (cpu->regs[REG_IP] >> 16) & 0xFFFF;
+        uint16_t offsetDestino = direccion & 0xFFFF;
+        cpu->regs[REG_IP] = ((uint32_t)segmentoActual << 16) | offsetDestino;
+    } else {
+        // Usar dirección completa
+        cpu->regs[REG_IP] = direccion;
+    }
+}
+
 //
 // Instrucciones de Salto
 //
 uint32_t instr_jmp(CPU *cpu, Instruccion *instr) {
     uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-    cpu->regs[REG_IP] = direccion;
+    saltarADireccion(cpu, &instr->op1, direccion);
     return 0;
 }
 
 uint32_t instr_jz(CPU *cpu, Instruccion *instr) {
     if (cpu->regs[REG_CC] & CC_Z_MASK) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -461,7 +492,7 @@ uint32_t instr_jz(CPU *cpu, Instruccion *instr) {
 uint32_t instr_jp(CPU *cpu, Instruccion *instr) {
     if (!(cpu->regs[REG_CC] & (CC_N_MASK | CC_Z_MASK))) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -470,7 +501,7 @@ uint32_t instr_jp(CPU *cpu, Instruccion *instr) {
 uint32_t instr_jn(CPU *cpu, Instruccion *instr) {
     if (cpu->regs[REG_CC] & CC_N_MASK) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -479,7 +510,7 @@ uint32_t instr_jn(CPU *cpu, Instruccion *instr) {
 uint32_t instr_jnz(CPU *cpu, Instruccion *instr) {
     if (!(cpu->regs[REG_CC] & CC_Z_MASK)) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -488,7 +519,7 @@ uint32_t instr_jnz(CPU *cpu, Instruccion *instr) {
 uint32_t instr_jnp(CPU *cpu, Instruccion *instr) {
     if (cpu->regs[REG_CC] & (CC_N_MASK | CC_Z_MASK)) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -497,7 +528,7 @@ uint32_t instr_jnp(CPU *cpu, Instruccion *instr) {
 uint32_t instr_jnn(CPU *cpu, Instruccion *instr) {
     if (!(cpu->regs[REG_CC] & CC_N_MASK)) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
-        cpu->regs[REG_IP] = direccion;
+        saltarADireccion(cpu, &instr->op1, direccion);
         return 0;
     }
     return 1;
@@ -545,7 +576,7 @@ uint32_t instr_call(CPU *cpu, Instruccion *instr) {
     uint32_t direccionRetorno = cpu->regs[REG_IP];
     stackPush32(cpu, direccionRetorno);
     uint32_t destino = fetchOperandValue(cpu, &instr->op1);
-    cpu->regs[REG_IP] = destino;
+    saltarADireccion(cpu, &instr->op1, destino);
     return 0;
 }
 

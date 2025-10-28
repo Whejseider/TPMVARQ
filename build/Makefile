@@ -135,29 +135,53 @@ TPMVARQ/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/build
 .PHONY : TPMVARQ/fast
 
-dissasembler/dissasembler.obj: dissasembler/dissasembler.c.obj
-.PHONY : dissasembler/dissasembler.obj
+disassembler/disassembler.obj: disassembler/disassembler.c.obj
+.PHONY : disassembler/disassembler.obj
 
 # target to build an object file
-dissasembler/dissasembler.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj
-.PHONY : dissasembler/dissasembler.c.obj
+disassembler/disassembler.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj
+.PHONY : disassembler/disassembler.c.obj
 
-dissasembler/dissasembler.i: dissasembler/dissasembler.c.i
-.PHONY : dissasembler/dissasembler.i
+disassembler/disassembler.i: disassembler/disassembler.c.i
+.PHONY : disassembler/disassembler.i
 
 # target to preprocess a source file
-dissasembler/dissasembler.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.i
-.PHONY : dissasembler/dissasembler.c.i
+disassembler/disassembler.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.i
+.PHONY : disassembler/disassembler.c.i
 
-dissasembler/dissasembler.s: dissasembler/dissasembler.c.s
-.PHONY : dissasembler/dissasembler.s
+disassembler/disassembler.s: disassembler/disassembler.c.s
+.PHONY : disassembler/disassembler.s
 
 # target to generate assembly for a file
-dissasembler/dissasembler.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.s
-.PHONY : dissasembler/dissasembler.c.s
+disassembler/disassembler.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.s
+.PHONY : disassembler/disassembler.c.s
+
+image/image.obj: image/image.c.obj
+.PHONY : image/image.obj
+
+# target to build an object file
+image/image.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/image/image.c.obj
+.PHONY : image/image.c.obj
+
+image/image.i: image/image.c.i
+.PHONY : image/image.i
+
+# target to preprocess a source file
+image/image.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/image/image.c.i
+.PHONY : image/image.c.i
+
+image/image.s: image/image.c.s
+.PHONY : image/image.s
+
+# target to generate assembly for a file
+image/image.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\TPMVARQ.dir\build.make CMakeFiles/TPMVARQ.dir/image/image.c.s
+.PHONY : image/image.c.s
 
 instructions/instructions.obj: instructions/instructions.c.obj
 .PHONY : instructions/instructions.obj
@@ -337,9 +361,12 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... TPMVARQ
-	@echo ... dissasembler/dissasembler.obj
-	@echo ... dissasembler/dissasembler.i
-	@echo ... dissasembler/dissasembler.s
+	@echo ... disassembler/disassembler.obj
+	@echo ... disassembler/disassembler.i
+	@echo ... disassembler/disassembler.s
+	@echo ... image/image.obj
+	@echo ... image/image.i
+	@echo ... image/image.s
 	@echo ... instructions/instructions.obj
 	@echo ... instructions/instructions.i
 	@echo ... instructions/instructions.s

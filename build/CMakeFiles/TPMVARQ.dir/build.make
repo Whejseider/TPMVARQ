@@ -141,19 +141,19 @@ CMakeFiles/TPMVARQ.dir/loader/loader.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/TPMVARQ.dir/loader/loader.c.s"
 	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\loader\loader.c" -o CMakeFiles\TPMVARQ.dir\loader\loader.c.s
 
-CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj: CMakeFiles/TPMVARQ.dir/flags.make
-CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/dissasembler/dissasembler.c
-CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj: CMakeFiles/TPMVARQ.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj"
-	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj -MF CMakeFiles\TPMVARQ.dir\dissasembler\dissasembler.c.obj.d -o CMakeFiles\TPMVARQ.dir\dissasembler\dissasembler.c.obj -c "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\dissasembler\dissasembler.c"
+CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj: CMakeFiles/TPMVARQ.dir/flags.make
+CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/disassembler/disassembler.c
+CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj: CMakeFiles/TPMVARQ.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj -MF CMakeFiles\TPMVARQ.dir\disassembler\disassembler.c.obj.d -o CMakeFiles\TPMVARQ.dir\disassembler\disassembler.c.obj -c "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\disassembler\disassembler.c"
 
-CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.i"
-	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\dissasembler\dissasembler.c" > CMakeFiles\TPMVARQ.dir\dissasembler\dissasembler.c.i
+CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.i"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\disassembler\disassembler.c" > CMakeFiles\TPMVARQ.dir\disassembler\disassembler.c.i
 
-CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.s"
-	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\dissasembler\dissasembler.c" -o CMakeFiles\TPMVARQ.dir\dissasembler\dissasembler.c.s
+CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.s"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\disassembler\disassembler.c" -o CMakeFiles\TPMVARQ.dir\disassembler\disassembler.c.s
 
 CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj: CMakeFiles/TPMVARQ.dir/flags.make
 CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/syscalls/syscalls.c
@@ -183,6 +183,20 @@ CMakeFiles/TPMVARQ.dir/utils/utils.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/TPMVARQ.dir/utils/utils.c.s"
 	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\utils\utils.c" -o CMakeFiles\TPMVARQ.dir\utils\utils.c.s
 
+CMakeFiles/TPMVARQ.dir/image/image.c.obj: CMakeFiles/TPMVARQ.dir/flags.make
+CMakeFiles/TPMVARQ.dir/image/image.c.obj: C:/Users/Franco/Desktop/2do\ cuatri\ 2025/ARQ\ COMPU/TPMVARQ/image/image.c
+CMakeFiles/TPMVARQ.dir/image/image.c.obj: CMakeFiles/TPMVARQ.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building C object CMakeFiles/TPMVARQ.dir/image/image.c.obj"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/TPMVARQ.dir/image/image.c.obj -MF CMakeFiles\TPMVARQ.dir\image\image.c.obj.d -o CMakeFiles\TPMVARQ.dir\image\image.c.obj -c "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\image\image.c"
+
+CMakeFiles/TPMVARQ.dir/image/image.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/TPMVARQ.dir/image/image.c.i"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\image\image.c" > CMakeFiles\TPMVARQ.dir\image\image.c.i
+
+CMakeFiles/TPMVARQ.dir/image/image.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/TPMVARQ.dir/image/image.c.s"
+	C:\MinGW64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S "C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\image\image.c" -o CMakeFiles\TPMVARQ.dir\image\image.c.s
+
 # Object files for target TPMVARQ
 TPMVARQ_OBJECTS = \
 "CMakeFiles/TPMVARQ.dir/main.c.obj" \
@@ -190,9 +204,10 @@ TPMVARQ_OBJECTS = \
 "CMakeFiles/TPMVARQ.dir/memory/memory.c.obj" \
 "CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj" \
 "CMakeFiles/TPMVARQ.dir/loader/loader.c.obj" \
-"CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj" \
+"CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj" \
 "CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj" \
-"CMakeFiles/TPMVARQ.dir/utils/utils.c.obj"
+"CMakeFiles/TPMVARQ.dir/utils/utils.c.obj" \
+"CMakeFiles/TPMVARQ.dir/image/image.c.obj"
 
 # External object files for target TPMVARQ
 TPMVARQ_EXTERNAL_OBJECTS =
@@ -202,14 +217,15 @@ TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/vmx/vmx.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/memory/memory.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/instructions/instructions.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/loader/loader.c.obj
-TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/dissasembler/dissasembler.c.obj
+TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/disassembler/disassembler.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/syscalls/syscalls.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/utils/utils.c.obj
+TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/image/image.c.obj
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/build.make
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/linkLibs.rsp
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/objects1.rsp
 TPMVARQ.exe: CMakeFiles/TPMVARQ.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Linking C executable TPMVARQ.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="C:\Users\Franco\Desktop\2do cuatri 2025\ARQ COMPU\TPMVARQ\build\CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Linking C executable TPMVARQ.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\TPMVARQ.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
