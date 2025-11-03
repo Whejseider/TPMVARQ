@@ -131,7 +131,7 @@ void inicializarRegistros(CPU *cpu, LayoutSegmentos *layout, uint16_t argc, uint
         cpu->regs[REG_SP] = 0xFFFFFFFF;
     } else {
         uint16_t tamSS = cpu->segmentos[indicesSegmento[SEG_SS]].tamano;
-        cpu->regs[REG_SP] = ((uint32_t)indicesSegmento[SEG_SS] << 16) | tamSS;
+        cpu->regs[REG_SP] = (uint32_t)indicesSegmento[SEG_SS] << 16 | tamSS;
     }
 
     cpu->ejecutando = 1;

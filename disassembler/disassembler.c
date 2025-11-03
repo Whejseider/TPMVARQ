@@ -135,13 +135,13 @@ void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo) {
     mostrarConstantes(cpu);
 
     uint32_t selectorCS = cpu->regs[REG_CS];
-    uint16_t indiceCS = (uint16_t)(selectorCS >> 16);
+    // uint16_t indiceCS = (uint16_t)(selectorCS >> 16);
     uint16_t entryPoint = (uint16_t)(selectorCS & 0xFFFF);
     uint32_t baseSelector = selectorCS & 0xFFFF0000u;
 
-    if (indiceCS >= cpu->cantSegmentos) {
-        indiceCS = 0;
-    }
+    // if (indiceCS >= cpu->cantSegmentos) {
+    //     indiceCS = 0;
+    // }
 
     uint32_t pos = 0;
     Instruccion instr;

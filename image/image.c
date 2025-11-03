@@ -43,7 +43,7 @@ int cargarImagen(const char *nombreArchivo, CPU *cpu) {
         return 0;
     }
 
-    // Convertir tamaño de memoria de big endian a little endian
+    // Intercambiar bytes: el archivo está en big-endian, convertir a host (SO) (little-endian)
     uint16_t tamMemKiB = (cabecera.tamMemKiB >> 8) | ((cabecera.tamMemKiB & 0xFF) << 8);
     size_t tamMem = (size_t)tamMemKiB * 1024;
 
@@ -73,10 +73,19 @@ int cargarImagen(const char *nombreArchivo, CPU *cpu) {
 
     // === LEER REGISTROS ===
     // 32 registros × 4 bytes = 128 bytes totales
-    if (fread(cpu->regs, 4, 32, archivo) != 32) {
-        mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudieron leer los registros");
-        fclose(archivo);
-        return 0;
+    // Leer byte por byte en big-endian, windows y SO modernos almacenan en little-endian
+    uint8_t regBuffer[4];
+    for (int i = 0; i < 32; i++) {
+        if (fread(regBuffer, 1, 4, archivo) != 4) {
+            mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudieron leer los registros");
+            fclose(archivo);
+            return 0;
+        }
+        // Convertir de big-endian a uint32_t
+        cpu->regs[i] = ((uint32_t)regBuffer[0] << 24) |
+                       ((uint32_t)regBuffer[1] << 16) |
+                       ((uint32_t)regBuffer[2] << 8) |
+                       ((uint32_t)regBuffer[3]);
     }
 
     // === LEER TABLA DE SEGMENTOS ===
@@ -91,6 +100,7 @@ int cargarImagen(const char *nombreArchivo, CPU *cpu) {
 
     // Decodificar cada entrada de la tabla
     // Formato de cada entrada: [2 bytes base | 2 bytes tamaño]
+    cpu->cantSegmentos = 0;
     for (int i = 0; i < MAX_SEGMENTOS; i++) {
         // Leer base
         uint16_t base = (tablaSegBuffer[i*4] << 8) | tablaSegBuffer[i*4 + 1];
@@ -99,6 +109,11 @@ int cargarImagen(const char *nombreArchivo, CPU *cpu) {
         
         cpu->segmentos[i].base = base;
         cpu->segmentos[i].tamano = tamano;
+        
+        // Contar segmentos válidos (tamaño > 0)
+        if (tamano > 0) {
+            cpu->cantSegmentos = i + 1;
+        }
     }
 
     // === LEER CONTENIDO DE MEMORIA PRINCIPAL ===
@@ -131,7 +146,7 @@ int guardarImagen(const char *nombreArchivo, CPU *cpu) {
     memcpy(cabecera.identificador, "VMI25", 5);
     cabecera.version = 1;
     
-    // Tamaño de memoria en KiB
+    // Tamaño de memoria en KiB: convertir de host (little-endian) a big-endian
     uint16_t tamMemKiB = (uint16_t)(cpu->tamMem / 1024);
     cabecera.tamMemKiB = (tamMemKiB >> 8) | ((tamMemKiB & 0xFF) << 8);
 
@@ -147,10 +162,19 @@ int guardarImagen(const char *nombreArchivo, CPU *cpu) {
 
     // === ESCRIBIR REGISTROS ===
     // Escribir los 32 registros x 4 bytes = 128 bytes
-    if (fwrite(cpu->regs, 4, 32, archivo) != 32) {
-        mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudieron escribir los registros");
-        fclose(archivo);
-        return 0;
+    // Escribir byte por byte en big-endian para portabilidad
+    uint8_t regBuffer[4];
+    for (int i = 0; i < 32; i++) {
+        // Convertir uint32_t a big-endian
+        regBuffer[0] = (cpu->regs[i] >> 24) & 0xFF;
+        regBuffer[1] = (cpu->regs[i] >> 16) & 0xFF;
+        regBuffer[2] = (cpu->regs[i] >> 8) & 0xFF;
+        regBuffer[3] = cpu->regs[i] & 0xFF;
+        if (fwrite(regBuffer, 1, 4, archivo) != 4) {
+            mostrarErrorConCodigo(VMX_ERROR_INVALID_FORMAT, "No se pudieron escribir los registros");
+            fclose(archivo);
+            return 0;
+        }
     }
 
     // === ESCRIBIR TABLA DE SEGMENTOS ===

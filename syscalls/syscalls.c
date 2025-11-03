@@ -55,7 +55,8 @@ void sysRead(CPU *cpu) {
 
     for (int i = 0; i < cantidad; i++) {
         uint32_t direccionLogica = direccion + (i * tamano);
-        printf("[%04X]: ", direccionLogica);
+        uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, tamano);
+        printf("[%04X]: ", direccionFisica);
 
         int32_t valor = leerValorPorModo(modo);
 

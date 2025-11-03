@@ -7,6 +7,7 @@
 #include "vmx/vmx.h"
 #include "loader/loader.h"
 #include "image/image.h"
+#include "disassembler/disassembler.h"
 
 /**
  * Programa principal de la máquina virtual VMX - MV2
@@ -31,7 +32,7 @@
  * @param argv array de strings con los argumentos
  * @return 0 si la ejecución fue exitosa, 1 si hubo error
  */
-int main(int argc, char *argv[]) {
+int main(const int argc, char *argv[]) {
     // Validar que se proveyeron argumentos mínimos
     if (argc < 2) {
         printf("Uso: %s [archivo.vmx] [archivo.vmi] [m=M] [-d] [-p param1 ... paramN]\n", argv[0]);
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
         // Parámetro m=M: configurar tamaño de memoria
         if (strncmp(arg, "m=", 2) == 0) {
             char *endptr = NULL;
-            long value = strtol(arg + 2, &endptr, 10);
+            const long value = strtol(arg + 2, &endptr, 10);
             // Validar que el valor sea numérico y positivo
             if (endptr == arg + 2 || value <= 0 || value > INT_MAX) {
                 printf("Memoria inválida: %s\n", arg);
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Identificar archivos por extensión
-        size_t len = strlen(arg);
+        const size_t len = strlen(arg);
         if (len > 4 && strcmp(arg + len - 4, ".vmx") == 0) {
             vmxFile = arg;  // Archivo de programa
         } else if (len > 4 && strcmp(arg + len - 4, ".vmi") == 0) {
@@ -103,8 +104,7 @@ int main(int argc, char *argv[]) {
     }
 
     // === INICIALIZAR ESTRUCTURA DE LA CPU ===
-    CPU cpu;
-    memset(&cpu, 0, sizeof(CPU));  // Limpiar toda la estructura
+    CPU cpu = {0};
     cpu.vmiFile = vmiFile;         // Guardar ruta del archivo .vmi para breakpoints
 
     int ejecucionExitosa = 0;
@@ -136,10 +136,22 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        // Mostrar disassembler si se solicitó
+        if (mostrarDisasm) {
+            // Obtener tamaño de CS desde la tabla de segmentos
+            uint32_t selectorCS = cpu.regs[REG_CS];
+            uint16_t indiceCS = (uint16_t)(selectorCS >> 16);
+            if (indiceCS < cpu.cantSegmentos && cpu.segmentos[indiceCS].tamano > 0) {
+                printf("=== DISASSEMBLER ===\n");
+                mostrarDisassembler(&cpu, cpu.segmentos[indiceCS].tamano);
+                printf("\n=== EJECUCIÓN ===\n");
+            }
+        }
+
         ejecucionExitosa = 1;
     }
 
-    // Verificar que la inicialización fue exitosa
+    // Verificar que la inicialización fue exitosa TODO
     if (!ejecucionExitosa) {
         printf("No se pudo inicializar la máquina virtual\n");
         if (cpu.mem) free(cpu.mem);

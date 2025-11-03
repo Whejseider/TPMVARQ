@@ -14,7 +14,7 @@ static int leerUint16BE(FILE *archivo, uint16_t *out) {
     if (fread(buffer, 1, 2, archivo) != 2) {
         return 0;
     }
-    *out = (uint16_t)((buffer[0] << 8) | buffer[1]);
+    *out = (uint16_t)(buffer[0] << 8 | buffer[1]);
     return 1;
 }
 
