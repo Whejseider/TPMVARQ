@@ -97,4 +97,4 @@ La máquina virtual se ejecuta desde la consola (`CMD` o `Powershell`) con la si
 ## 📄 Información para la Entrega
 
 * **Sistema Operativo:** Desarrollado y compilado para **Windows 11 x64**.
-* **Enlace al Commit:** [Click aquí](https://github.com/Whejseider/TPMVARQ/commit/2fa9aeae688f928382cd4798185c584a3fda7f8b)
+* **Enlace al Commit:** [Click aquí](https://github.com/Whejseider/TPMVARQ/commit/1ba32df5195c5ce5e9f5d2846561520579761645)
