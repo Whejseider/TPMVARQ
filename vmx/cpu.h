@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 // ==== CONSTANTES DE ARQUITECTURA ====
@@ -19,18 +20,18 @@
 
 // ==== OPCODES DE INSTRUCCIONES ====
 
-// Control y syscalls
+// Un operando
 #define OP_SYS  0x00  // Llamada al sistema
-#define OP_STOP 0x0F  // Detener ejecución
-
-// Saltos condicionales
 #define OP_JMP  0x01  // Salto incondicional
-#define OP_JZ   0x02  // Saltar si Zero (resultado = 0)
-#define OP_JP   0x03  // Saltar si Positive (resultado > 0)
-#define OP_JN   0x04  // Saltar si Negative (resultado < 0)
-#define OP_JNZ  0x05  // Saltar si Not Zero
-#define OP_JNP  0x06  // Saltar si Not Positive
-#define OP_JNN  0x07  // Saltar si Not Negative
+#define OP_JP   0x02  // Saltar si Positive (resultado > 0)
+#define OP_JN   0x03  // Saltar si Negative (resultado < 0)
+#define OP_JZ   0x04  // Saltar si Zero (resultado = 0)
+#define OP_JC   0x05  // Saltar si Carry (acarreo)
+#define OP_JV   0x06  // Saltar si Overflow (desbordamiento)
+#define OP_JNP  0x07  // Saltar si Not Positive
+#define OP_JNN  0x08  // Saltar si Not Negative
+#define OP_JNZ  0x09  // Saltar si Not Zero
+#define OP_NOT  0x0A  // NOT bit a bit
 
 // Pila y subrutinas
 #define OP_PUSH 0x0B  // Empujar a pila
@@ -38,29 +39,25 @@
 #define OP_CALL 0x0D  // Llamar subrutina
 #define OP_RET  0x0E  // Retornar de subrutina
 
-// Movimiento de datos
-#define OP_MOV  0x10  // Mover datos
-#define OP_SWAP 0x1C  // Intercambiar operandos
-#define OP_LDL  0x1D  // Cargar Low (bits 0-15)
-#define OP_LDH  0x1E  // Cargar High (bits 16-31)
+// Sin operando
+#define OP_STOP 0x0F  // Detener ejecución
 
-// Operaciones aritméticas
+// Dos operandos
+#define OP_MOV  0x10  // Mover datos
 #define OP_ADD  0x11  // Suma
 #define OP_SUB  0x12  // Resta
 #define OP_MUL  0x13  // Multiplicación
-#define OP_DIV  0x14  // División (quotient en AC, remainder en RES9)
+#define OP_DIV  0x14  // División (cociente en op1, resto en AC)
 #define OP_CMP  0x15  // Comparación (actualiza CC)
-
-// Operaciones lógicas y de bits
-#define OP_NOT  0x08  // NOT bit a bit
-#define OP_AND  0x19  // AND bit a bit
-#define OP_OR   0x1A  // OR bit a bit
-#define OP_XOR  0x1B  // XOR bit a bit
-#define OP_SHL  0x16  // Shift Left lógico
-#define OP_SHR  0x17  // Shift Right lógico
-#define OP_SAR  0x18  // Shift Arithmetic Right (mantiene signo)
-
-// Utilidades
+#define OP_AND  0x16  // AND bit a bit
+#define OP_OR   0x17  // OR bit a bit
+#define OP_XOR  0x18  // XOR bit a bit
+#define OP_SWAP 0x19  // Intercambiar operandos
+#define OP_SHL  0x1A  // Shift Left lógico
+#define OP_SHR  0x1B  // Shift Right lógico
+#define OP_SAR  0x1C  // Shift Arithmetic Right (mantiene signo)
+#define OP_LDL  0x1D  // Cargar Low (bits 0-15)
+#define OP_LDH  0x1E  // Cargar High (bits 16-31)
 #define OP_RND  0x1F  // Random (genera número aleatorio)
 
 // ==== ÍNDICES DE SEGMENTOS ====
@@ -111,22 +108,22 @@ typedef struct {
  * - Registros de segmento (CS, DS, ES, SS, KS, PS)
  */
 enum registros {
-    // Registros de control de memoria
-    REG_LAR = 0,   // Logical Address Register (última dirección lógica accedida)
-    REG_MAR,       // Memory Address Register [16 bits tamaño | 16 bits dir_física]
-    REG_MBR,       // Memory Buffer Register (último valor leído/escrito)
-    
     // Registros de ejecución
-    REG_IP,        // Instruction Pointer (dirección de próxima instrucción)
+    REG_IP = 0,    // Instruction Pointer (dirección de próxima instrucción)
     REG_OPC,       // Opcode actual en ejecución
     REG_OP1,       // Operando 1 decodificado
     REG_OP2,       // Operando 2 decodificado
-    
+
+    // Registros de control de memoria
+    REG_LAR,       // Logical Address Register (última dirección lógica accedida)
+    REG_MAR,       // Memory Address Register [16 bits tamaño | 16 bits dir_física]
+    REG_MBR,       // Memory Buffer Register (último valor leído/escrito)
+
     // Registros de pila
     REG_SP,        // Stack Pointer (tope de la pila)
     REG_BP,        // Base Pointer (base del stack frame)
     REG_RES9,      // Reservado (usado para remainder en DIV)
-    
+
     // Registros de propósito general
     REG_EAX,       // Accumulator (operaciones aritméticas)
     REG_EBX,       // Base
@@ -134,11 +131,11 @@ enum registros {
     REG_EDX,       // Data
     REG_EEX,       // Extended E
     REG_EFX,       // Extended F
-    
+
     // Registros de resultado
     REG_AC,        // Accumulator (resultado de operaciones)
-    REG_CC,        // Condition Codes (flags N y Z)
-    
+    REG_CC,        // Condition Codes (flags N, Z, C y V)
+
     // Registros reservados
     REG_RES18,
     REG_RES19,
@@ -148,7 +145,7 @@ enum registros {
     REG_RES23,
     REG_RES24,
     REG_RES25,
-    
+
     // Registros de segmento (contienen índice del segmento en bits altos)
     REG_CS,        // Code Segment register
     REG_DS,        // Data Segment register
@@ -169,6 +166,8 @@ enum registros {
 
 #define CC_N_MASK 0x80000000  // Negative flag (bit 31 de CC)
 #define CC_Z_MASK 0x40000000  // Zero flag (bit 30 de CC)
+#define CC_C_MASK 0x20000000  // Carry flag (bit 29 de CC)
+#define CC_V_MASK 0x10000000  // Overflow flag (bit 28 de CC)
 
 // ==== ESTRUCTURAS DE DATOS ====
 
