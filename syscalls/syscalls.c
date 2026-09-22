@@ -5,6 +5,7 @@
 #include "syscalls.h"
 #include "../memory/memory.h"
 #include "../image/image.h"
+#include "../utils/utils.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -53,6 +54,10 @@ void sysRead(CPU *cpu) {
     uint16_t cantidad = config & 0xFFFF;
     uint16_t tamano = (config >> 16) & 0xFFFF;
 
+    if (tamano != 1 && tamano != 2 && tamano != 4) {
+        terminarConError(VMX_ERROR_INVALID_INSTRUCTION, "Tamaño de celda inválido");
+    }
+
     for (int i = 0; i < cantidad; i++) {
         uint32_t direccionLogica = direccion + (i * tamano);
         uint32_t direccionFisica = traducirDireccion(cpu, direccionLogica, tamano);
@@ -77,6 +82,10 @@ void sysWrite(CPU *cpu) {
     uint32_t config = cpu->regs[REG_ECX];
     uint16_t cantidad = config & 0xFFFF;
     uint16_t tamano = (config >> 16) & 0xFFFF;
+
+    if (tamano != 1 && tamano != 2 && tamano != 4) {
+        terminarConError(VMX_ERROR_INVALID_INSTRUCTION, "Tamaño de celda inválido");
+    }
 
     for (int i = 0; i < cantidad; i++) {
         uint32_t direccionLogica = direccion + (i * tamano);
