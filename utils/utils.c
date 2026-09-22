@@ -71,7 +71,7 @@ int validarIdentificadorVMX(const char *identificador) {
         return 0;
     }
     
-    return strncmp(identificador, "VMX25", 5) == 0;
+    return strncmp(identificador, "VMX26", 5) == 0 || strncmp(identificador, "VMX25", 5) == 0;
 }
 
 int validarVersionVMX(uint8_t version) {
