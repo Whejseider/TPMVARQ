@@ -143,11 +143,11 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
         pos += 2;
     } else if (tipoOpB == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
-        uint8_t descriptor = leerByteInstr(cpu, dirLog);
+        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog);
+        uint8_t descriptor = leerByteInstr(cpu, dirLog + 2);
         instr->op2.datos.memoria.codReg = descriptor & 0x1F;
-        instr->op2.datos.memoria.tam = (descriptor >> 6) & 0x03;
-        instr->op2.ancho = bytesDesdeCodigo(instr->op2.datos.memoria.tam);
-        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog + 1);
+        instr->op2.datos.memoria.tam = 0;
+        instr->op2.ancho = 4;
         instr->op2.datos.memoria.offset = offset16;
         pos += 3;
     } else {
@@ -169,11 +169,11 @@ uint32_t leerInstruccion(CPU *cpu, uint32_t direccion, Instruccion *instr) {
         pos += 2;
     } else if (tipoOpA == TIPO_MEMORIA) {
         uint32_t dirLog = direccion + pos;
-        uint8_t descriptor = leerByteInstr(cpu, dirLog);
+        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog);
+        uint8_t descriptor = leerByteInstr(cpu, dirLog + 2);
         instr->op1.datos.memoria.codReg = descriptor & 0x1F;
-        instr->op1.datos.memoria.tam = (descriptor >> 6) & 0x03;
-        instr->op1.ancho = bytesDesdeCodigo(instr->op1.datos.memoria.tam);
-        int16_t offset16 = (int16_t) leerWordInstr(cpu, dirLog + 1);
+        instr->op1.datos.memoria.tam = 0;
+        instr->op1.ancho = 4;
         instr->op1.datos.memoria.offset = offset16;
         pos += 3;
     } else {
@@ -300,9 +300,22 @@ void establecerValorOperando(CPU *cpu, Operando *op, uint32_t valor) {
 
 // ==== INSTRUCCIONES ARITMÉTICAS Y LÓGICAS ====
 
+static int desbordaSuma(int32_t a, int32_t b, int32_t r) {
+    return ((uint32_t)(~(a ^ b)) & (uint32_t)(a ^ r) & 0x80000000) != 0;
+}
+
+static int desbordaResta(int32_t a, int32_t b, int32_t r) {
+    return ((uint32_t)(a ^ b) & (uint32_t)(a ^ r) & 0x80000000) != 0;
+}
+
+static int acarreoResta(uint32_t a, uint32_t b) {
+    return ((uint64_t)a + (uint64_t)(0u - b)) > 0xFFFFFFFFu;
+}
+
 uint32_t instr_mov(CPU *cpu, Instruccion *instr) {
     uint32_t valor = obtenerValorOperando(cpu, &instr->op2);
     establecerValorOperando(cpu, &instr->op1, valor);
+    actualizarCC(cpu, valor, 0, 0);
     return 1;
 }
 
@@ -310,8 +323,10 @@ uint32_t instr_add(CPU *cpu, Instruccion *instr) {
     int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
     int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
     int32_t resultado = val1 + val2;
+    int acarreo = (uint32_t)resultado < (uint32_t)val1;
+    int desbordamiento = desbordaSuma(val1, val2, resultado);
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
+    actualizarCC(cpu, (uint32_t) resultado, acarreo, desbordamiento);
     return 1;
 }
 
@@ -319,17 +334,22 @@ uint32_t instr_sub(CPU *cpu, Instruccion *instr) {
     int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
     int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
     int32_t resultado = val1 - val2;
+    int acarreo = acarreoResta((uint32_t)val1, (uint32_t)val2);
+    int desbordamiento = desbordaResta(val1, val2, resultado);
     establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
+    actualizarCC(cpu, (uint32_t) resultado, acarreo, desbordamiento);
     return 1;
 }
 
 uint32_t instr_mul(CPU *cpu, Instruccion *instr) {
-    int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
-    int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
-    int32_t resultado = val1 * val2;
-    establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
+    uint32_t val1 = obtenerValorOperando(cpu, &instr->op1);
+    uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
+    uint64_t resultadoCompleto = (uint64_t)val1 * (uint64_t)val2;
+    uint32_t resultado = (uint32_t)resultadoCompleto;
+    int acarreo = resultadoCompleto > 0xFFFFFFFFu;
+    int desbordamiento = (int64_t)(int32_t)val1 * (int64_t)(int32_t)val2 != (int64_t)(int32_t)resultado;
+    establecerValorOperando(cpu, &instr->op1, resultado);
+    actualizarCC(cpu, resultado, acarreo, desbordamiento);
     return 1;
 }
 
@@ -344,15 +364,9 @@ uint32_t instr_div(CPU *cpu, Instruccion *instr) {
     int32_t cociente = dividendo / divisor;
     int32_t resto = dividendo % divisor;
 
-    // Si hay resto y los signos son diferentes, ajustar hacia abajo
-    if (resto != 0 && ((dividendo ^ divisor) < 0)) {
-        cociente--;
-        resto += divisor;
-    }
-
     establecerValorOperando(cpu, &instr->op1, (uint32_t)cociente);
     cpu->regs[REG_AC] = resto;
-    actualizarCC(cpu, (uint32_t)cociente);
+    actualizarCC(cpu, (uint32_t)cociente, 0, 0);
 
     return 1;
 }
@@ -361,34 +375,66 @@ uint32_t instr_cmp(CPU *cpu, Instruccion *instr) {
     int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
     int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
     int32_t resultado = val1 - val2;
-    actualizarCC(cpu, (uint32_t) resultado);
+    int acarreo = acarreoResta((uint32_t)val1, (uint32_t)val2);
+    int desbordamiento = desbordaResta(val1, val2, resultado);
+    actualizarCC(cpu, (uint32_t) resultado, acarreo, desbordamiento);
     return 1;
 }
 
 uint32_t instr_shl(CPU *cpu, Instruccion *instr) {
     uint32_t val1 = obtenerValorOperando(cpu, &instr->op1);
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
-    uint32_t resultado = val1 << val2;
+    uint32_t resultado;
+    int acarreo = 0;
+    if (val2 == 0) {
+        resultado = val1;
+    } else if (val2 >= 32) {
+        resultado = 0;
+        acarreo = (val2 == 32) ? (val1 & 1) : 0;
+    } else {
+        resultado = val1 << val2;
+        acarreo = (val1 >> (32 - val2)) & 1;
+    }
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, resultado);
+    actualizarCC(cpu, resultado, acarreo, 0);
     return 1;
 }
 
 uint32_t instr_shr(CPU *cpu, Instruccion *instr) {
     uint32_t val1 = obtenerValorOperando(cpu, &instr->op1);
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
-    uint32_t resultado = val1 >> val2;
+    uint32_t resultado;
+    int acarreo = 0;
+    if (val2 == 0) {
+        resultado = val1;
+    } else if (val2 >= 32) {
+        resultado = 0;
+        acarreo = (val2 == 32) ? ((val1 >> 31) & 1) : 0;
+    } else {
+        resultado = val1 >> val2;
+        acarreo = (val1 >> (val2 - 1)) & 1;
+    }
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, resultado);
+    actualizarCC(cpu, resultado, acarreo, 0);
     return 1;
 }
 
 uint32_t instr_sar(CPU *cpu, Instruccion *instr) {
     int32_t val1 = (int32_t) obtenerValorOperando(cpu, &instr->op1);
-    int32_t val2 = (int32_t) obtenerValorOperando(cpu, &instr->op2);
-    int32_t resultado = val1 >> val2;
-    establecerValorOperando(cpu, &instr->op1, (uint32_t) resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
+    uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
+    int32_t resultado;
+    int acarreo = 0;
+    if (val2 == 0) {
+        resultado = val1;
+    } else if (val2 >= 32) {
+        resultado = (val1 < 0) ? -1 : 0;
+        acarreo = (val2 == 32) ? ((val1 >> 31) & 1) : 0;
+    } else {
+        resultado = val1 >> val2;
+        acarreo = (val1 >> (val2 - 1)) & 1;
+    }
+    establecerValorOperando(cpu, &instr->op1, (uint32_t)resultado);
+    actualizarCC(cpu, (uint32_t)resultado, acarreo, 0);
     return 1;
 }
 
@@ -397,7 +443,7 @@ uint32_t instr_and(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 & val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, resultado);
+    actualizarCC(cpu, resultado, 0, 0);
     return 1;
 }
 
@@ -406,7 +452,7 @@ uint32_t instr_or(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 | val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, resultado);
+    actualizarCC(cpu, resultado, 0, 0);
     return 1;
 }
 
@@ -415,7 +461,7 @@ uint32_t instr_xor(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     uint32_t resultado = val1 ^ val2;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, resultado);
+    actualizarCC(cpu, resultado, 0, 0);
     return 1;
 }
 
@@ -424,6 +470,7 @@ uint32_t instr_swap(CPU *cpu, Instruccion *instr) {
     uint32_t val2 = obtenerValorOperando(cpu, &instr->op2);
     establecerValorOperando(cpu, &instr->op1, val2);
     establecerValorOperando(cpu, &instr->op2, val1);
+    actualizarCC(cpu, val1 ^ val2, 0, 0);
     return 1;
 }
 
@@ -489,6 +536,24 @@ uint32_t instr_jz(CPU *cpu, Instruccion *instr) {
     return 1;
 }
 
+uint32_t instr_jc(CPU *cpu, Instruccion *instr) {
+    if (cpu->regs[REG_CC] & CC_C_MASK) {
+        uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
+        saltarADireccion(cpu, &instr->op1, direccion);
+        return 0;
+    }
+    return 1;
+}
+
+uint32_t instr_jv(CPU *cpu, Instruccion *instr) {
+    if (cpu->regs[REG_CC] & CC_V_MASK) {
+        uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
+        saltarADireccion(cpu, &instr->op1, direccion);
+        return 0;
+    }
+    return 1;
+}
+
 uint32_t instr_jp(CPU *cpu, Instruccion *instr) {
     if (!(cpu->regs[REG_CC] & (CC_N_MASK | CC_Z_MASK))) {
         uint32_t direccion = obtenerValorOperando(cpu, &instr->op1);
@@ -542,7 +607,7 @@ uint32_t instr_not(CPU *cpu, Instruccion *instr) {
     uint32_t val = obtenerValorOperando(cpu, &instr->op1);
     uint32_t resultado = ~val;
     establecerValorOperando(cpu, &instr->op1, resultado);
-    actualizarCC(cpu, (uint32_t) resultado);
+    actualizarCC(cpu, resultado, 0, 0);
     return 1;
 }
 

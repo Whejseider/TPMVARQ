@@ -228,6 +228,8 @@ uint32_t instr_jmp(CPU *cpu, Instruccion *instr);
  *  JNP fin   ; Salta a la celda con rótulo "fin" si el bit N o el bit Z están en 1 (<=0)
  */
 uint32_t instr_jz(CPU *cpu, Instruccion *instr);
+uint32_t instr_jc(CPU *cpu, Instruccion *instr);
+uint32_t instr_jv(CPU *cpu, Instruccion *instr);
 /**
  * Instrucciones de salto condicionales: JZ, JP, JN, JNZ, JNP, JNN
  *
