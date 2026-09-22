@@ -7,7 +7,7 @@
 #include "../memory/memory.h"
 
 static const char *registroBaseNames[32] = {
-        "LAR", "MAR", "MBR", "IP", "OPC", "OP1", "OP2", "SP",
+        "IP", "OPC", "OP1", "OP2", "LAR", "MAR", "MBR", "SP",
         "BP", "R9", "EAX", "EBX", "ECX", "EDX", "EEX", "EFX",
         "AC", "CC", "R18", "R19", "R20", "R21", "R22", "R23",
         "R24", "R25", "CS", "DS", "ES", "SS", "KS", "PS"
@@ -42,13 +42,6 @@ static const char *nombreRegistro(uint8_t reg, uint8_t sector) {
     }
 
     return registroBaseNames[reg];
-}
-
-static char prefijoMemoria(uint8_t codigoTam) {
-    uint8_t tam = codigoTam & 0x03;
-    if (tam == 0x03) return 'b';
-    if (tam == 0x02) return 'w';
-    return 'l';
 }
 
 static void imprimirCadenaConstante(CPU *cpu, uint16_t base, uint16_t offset, uint16_t longitud) {
@@ -146,6 +139,9 @@ void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo) {
     uint32_t pos = 0;
     Instruccion instr;
 
+    uint16_t indiceCS = (uint16_t)(selectorCS >> 16);
+    uint32_t baseCS = (indiceCS < cpu->cantSegmentos) ? cpu->segmentos[indiceCS].base : 0;
+
     while (pos < tamanoCodigo) {
         uint32_t direccionLogica = baseSelector | (uint16_t) pos;
         uint32_t tamanoInstr = leerInstruccion(cpu, direccionLogica, &instr);
@@ -154,7 +150,7 @@ void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo) {
         }
 
         char marcador = (pos == entryPoint) ? '>' : ' ';
-        printf("%c[%04X] ", marcador, pos);
+        printf("%c[%04X] ", marcador, baseCS + pos);
 
         // Mostrar bytes de la instrucción
         for (uint32_t i = 0; i < tamanoInstr; i++) {
@@ -164,7 +160,7 @@ void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo) {
         }
 
         // Formato
-        for (uint32_t i = tamanoInstr; i < 6; i++) {
+        for (uint32_t i = tamanoInstr; i < 4; i++) {
             printf("   ");
         }
 
@@ -190,10 +186,10 @@ void mostrarDisassembler(CPU *cpu, uint16_t tamanoCodigo) {
 
 void mostrarMnemonico(uint8_t opcode) {
     const char *mnemonicos[] = {
-            "SYS", "JMP", "JZ", "JP", "JN", "JNZ", "JNP", "JNN",
-            "NOT", "???", "???", "PUSH", "POP", "CALL", "RET", "STOP",
-            "MOV", "ADD", "SUB", "MUL", "DIV", "CMP", "SHL", "SHR",
-            "SAR", "AND", "OR", "XOR", "SWAP", "LDL", "LDH", "RND"
+            "SYS", "JMP", "JP", "JN", "JZ", "JC", "JV", "JNP",
+            "JNN", "JNZ", "NOT", "PUSH", "POP", "CALL", "RET", "STOP",
+            "MOV", "ADD", "SUB", "MUL", "DIV", "CMP", "AND", "OR",
+            "XOR", "SWAP", "SHL", "SHR", "SAR", "LDL", "LDH", "RND"
     };
 
     if (opcode < 32) {
@@ -228,8 +224,7 @@ void mostrarOperando(Operando *op, CPU *cpu) {
             break;
         }
         case TIPO_MEMORIA: {
-            char prefijo = prefijoMemoria(op->datos.memoria.tam);
-            printf("%c[", prefijo);
+            printf("[");
 
             uint8_t reg = op->datos.memoria.codReg;
             int16_t desplazamiento = op->datos.memoria.offset;
