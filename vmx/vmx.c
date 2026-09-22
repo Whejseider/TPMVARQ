@@ -18,6 +18,8 @@ void inicializarTablaInstrucciones() {
     tablaInstrucciones[OP_SYS] = instr_sys;
     tablaInstrucciones[OP_JMP] = instr_jmp;
     tablaInstrucciones[OP_JZ] = instr_jz;
+    tablaInstrucciones[OP_JC] = instr_jc;
+    tablaInstrucciones[OP_JV] = instr_jv;
     tablaInstrucciones[OP_JP] = instr_jp;
     tablaInstrucciones[OP_JN] = instr_jn;
     tablaInstrucciones[OP_JNZ] = instr_jnz;
@@ -271,13 +273,19 @@ void vmxRun(CPU *cpu) {
 // ==== ACTUALIZACIÓN DE CONDITION CODES ====
 
 // Implementación de actualización de CC
-void actualizarCC(CPU *cpu, uint32_t resultado) {
+void actualizarCC(CPU *cpu, uint32_t resultado, int acarreo, int desbordamiento) {
     // Limpiar todos los flags
     cpu->regs[REG_CC] = 0;
-    
+
     // Activar flag Z si el resultado es cero
     if ((resultado & 0xFFFFFFFF) == 0) cpu->regs[REG_CC] |= CC_Z_MASK;
-    
+
     // Flag N: activar si resultado < 0 (signed)
     if ((int32_t)resultado < 0) cpu->regs[REG_CC] |= CC_N_MASK;
+
+    // Flag C: acarreo
+    if (acarreo) cpu->regs[REG_CC] |= CC_C_MASK;
+
+    // Flag V: desbordamiento
+    if (desbordamiento) cpu->regs[REG_CC] |= CC_V_MASK;
 }

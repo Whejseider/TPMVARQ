@@ -72,10 +72,14 @@ void vmxRun(CPU *cpu);
  * Actualiza los flags:
  * - N (Negative): bit 31 = 1 si resultado < 0
  * - Z (Zero): bit 30 = 1 si resultado == 0
+ * - C (Carry): bit 29 = 1 si hubo acarreo
+ * - V (Overflow): bit 28 = 1 si hubo desbordamiento
  * 
- * Usado después de operaciones aritméticas y CMP.
+ * Usado después de operaciones aritméticas, lógicas y CMP.
  * 
  * @param cpu estructura de la CPU
  * @param resultado valor a evaluar (interpretado como signed)
+ * @param acarreo indica si hubo acarreo en la operación
+ * @param desbordamiento indica si hubo desbordamiento en la operación
  */
-void actualizarCC(CPU *cpu, uint32_t resultado);
+void actualizarCC(CPU *cpu, uint32_t resultado, int acarreo, int desbordamiento);
