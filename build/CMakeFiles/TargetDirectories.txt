@@ -1,3 +1,0 @@
-C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/build/CMakeFiles/TPMVARQ.dir
-C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/build/CMakeFiles/edit_cache.dir
-C:/Users/Franco/Desktop/2do cuatri 2025/ARQ COMPU/TPMVARQ/build/CMakeFiles/rebuild_cache.dir
